@@ -80,11 +80,24 @@ This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfile
     (setq indent-tabs-mode nil)
   #+END_SRC
   
-  When you hit the bottom of the page scrolling, don't jump half a page
+  Make 'yes or no' prompts shorter.
   #+BEGIN_SRC emacs-lisp :tangle yes
-    (setq scroll-step 1)
+    (defalias 'yes-or-no-p 'y-or-n-p)
   #+END_SRC
 
+  
+  For whatever reason, adding things to ~exec-path~ can be a bit wonky, so let's define
+  a helper for doing just that.
+  #+BEGIN_SRC emacs-lisp :tangle yes
+    (defun add-to-path (path)
+      (add-to-list 'exec-path path)
+      (setenv "PATH" (concat path ":" (getenv "PATH"))))
+  #+END_SRC
+
+  A lot of our commands live inside of ~/usr/local/bin~, so let's load it up!
+  #+BEGIN_SRC emacs-lisp :tangle yes
+    (add-to-path "/usr/local/bin/")
+  #+END_SRC
 * Themes
   There are a few options here, as I haven't totally settled.
   
@@ -92,45 +105,71 @@ This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfile
   kind of hard to read (mostly JSX).
   #+BEGIN_SRC emacs-lisp :tangle yes
     (use-package almost-mono-themes
-      :straight t
-      :config
-      (load-theme 'almost-mono-white t))
+      :straight t)
   #+END_SRC
   
-* Evil
+  #+BEGIN_SRC emacs-lisp :tangle yes
+    (use-package tao-theme
+      :straight t)
+  #+END_SRC
+* Interface
+** Evil
   [[https://github.com/emacs-evil/evil][evil]] provides us with vim-like keybindings inside of emacs.
   #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package evil
+    :init
+    (setq evil-want-C-u-scroll t)
     :straight t)
   (evil-mode 1)
   (define-key evil-motion-state-map " " nil)
   #+END_SRC
-* Ivy
+  
+  Next, let's install [[https://github.com/linktohack/evil-commentary][evil-commentary]], which lets us easily comment out code. 
+  #+BEGIN_SRC emacs-lisp :tangle yes
+    (use-package evil-commentary
+      :straight t
+      :config
+      (evil-commentary-mode))
+  #+END_SRC
+
+** Ivy
+  For our filtering needs, we are going to use ivy.
+  To start, let's load up all of the ivy packages.
   #+BEGIN_SRC emacs-lisp :tangle yes
     (use-package ivy
       :straight t
+      :init
+      (setq ivy-re-builders-alist
+	    '((counsel-rg . ivy--regex-plus)
+	      (swiper . ivy--regex-plus)
+	      (t . ivy--regex-ignore-order)))
+      :config
+      (ivy-mode 1)
       :bind (:map evil-motion-state-map
-                  ("/" . 'swiper)))
+		  ("/" . 'swiper)))
 
     (use-package hydra
       :straight t)
 
     (use-package counsel
       :straight t
+      :config
+      (counsel-mode 1)
       :bind (:map evil-motion-state-map
-             ("SPC f r" . 'counsel-recentf)
-             ("SPC ." . 'counsel-find-file)
-             :map global-map
-             ("M-x" . 'counsel-M-x)))
+	     ("SPC ." . 'counsel-find-file)
+	     :map global-map
+	     ("M-x" . 'counsel-M-x)))
 
     (use-package ivy-hydra
       :straight t
       :after (ivy hydra))
-
-    (ivy-mode 1)
-    (counsel-mode 1)
   #+END_SRC
-* Help
+  
+  By default =ivy= starts every regex with ~^~. I find this annoying,
+  so let's just set it to an empty string.
+  #+BEGIN_SRC emacs-lisp :tangle yes
+    (setq ivy-initial-inputs-alist nil)
+  #+END_SRC
 ** Which Key
   Next, let's add [[https://github.com/justbur/emacs-which-key][which-key]].
   #+BEGIN_SRC emacs-lisp :tangle yes
@@ -148,7 +187,8 @@ This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfile
   #+BEGIN_SRC emacs-lisp :tangle yes
     (which-key-mode 1)
   #+END_SRC
-** Keybindings
+** Modeline
+** Help
   First, let's bind some of the =describe= functions
   to keys that are more in line with vim.
   #+BEGIN_SRC emacs-lisp :tangle yes
@@ -159,7 +199,7 @@ This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfile
       (kbd "SPC h F") 'counsel-describe-face
       (kbd "SPC h i") 'info)
   #+END_SRC
-  
+
   Next, let's add some =which-key= descriptions
   #+BEGIN_SRC emacs-lisp :tangle yes
     (which-key-add-key-based-replacements
@@ -170,7 +210,7 @@ This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfile
       "SPC h v" "describe variable"
       "SPC h i" "info")
   #+END_SRC
-* Buffers
+** Buffers
   Let's bind buffer management to some nicer keys.
   #+BEGIN_SRC emacs-lisp :tangle yes
     (evil-define-key 'normal 'global
@@ -186,7 +226,19 @@ This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfile
       "SPC b b" "switch buffer"
       "SPC bk" "kill")
   #+END_SRC
-* Windows
+** Files
+  Some handy bindings for opening files
+  #+BEGIN_SRC emacs-lisp :tangle yes
+    (evil-define-key 'normal 'global
+      (kbd "SPC f r") 'counsel-recentf
+      (kbd "SPC f i") (lambda () (interactive) (find-file "~/.emacs.d/init.org")))
+
+    (which-key-add-key-based-replacements
+      "SPC f" "files"
+      "SPC f r" "recent files"
+      "SPC f i" "config file")
+  #+END_SRC
+** Windows
   Let's bind window management to some nicer keys
   #+BEGIN_SRC emacs-lisp :tangle yes
     (evil-global-set-key 'normal (kbd "SPC w h") 'evil-window-left)
@@ -212,6 +264,26 @@ This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfile
       "SPC wq" "close"
       )
   #+END_SRC
+** Tabs
+   Let's use emacs 27 recently added tab support to emulate workspaces.
+   #+BEGIN_SRC emacs-lisp :tangle yes
+     (evil-define-key 'normal 'global
+       (kbd "SPC t l") 'tab-next
+       (kbd "SPC t h") 'tab-previous
+       (kbd "SPC t k") 'tab-close
+       (kbd "SPC t n") 'tab-new
+       (kbd "SPC t r") 'tab-bar-rename-tab
+       (kbd "SPC t b") 'switch-to-buffer-other-tab)
+
+     (which-key-add-key-based-replacements
+       "SPC t" "tabs"
+       "SPC t n" "new tab"
+       "SPC t r" "rename tab"
+       "SPC t k" "delete tab"
+       "SPC t h" "previous tab"
+       "SPC t l" "next tab"
+       "SPC t b" "open buffer in tab")
+   #+END_SRC
 * Org
 ** Babel
    It's a bit annoying that =org-babel= asks for confirmation all the time,
@@ -298,6 +370,68 @@ This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfile
 				   :repo "Ladicle/flymake-posframe")
        :hook (flymake-mode . flymake-posframe-mode))
    #+END_SRC
+   
+   Next, let's add some nice keybindings.
+   #+BEGIN_SRC emacs-lisp :tangle yes
+     (evil-define-key 'normal 'global
+       (kbd "SPC e j") 'flymake-goto-next-error
+       (kbd "SPC e k") 'flymake-goto-prev-error
+       (kbd "SPC e e") 'flymake-show-diagnostics-buffer)
+
+     (which-key-add-key-based-replacements
+       "SPC e" "errors"
+       "SPC e j" "next error"
+       "SPC e k" "previous error"
+       "SPC e e" "display errors")
+   #+END_SRC
+   
+   Now, the =flymake= diagnostic buffer will pop up somewhat randomly, so let's make sure it only
+   ever pops up at the bottom.
+   
+   #+BEGIN_SRC emacs-lisp :tangle yes
+     (add-to-list 'display-buffer-alist
+		  '("\\*Flymake diagnostics*"
+		    (display-buffer-below-selected display-buffer-at-bottom)
+		    (inhibit-same-window . t)
+		    (window-height . 15)))
+   #+END_SRC
+
+** SmartParens
+   [[https://github.com/Fuco1/smartparens][smartparens]] provides a bunch of utilities for handling
+   pairs in emacs.
+   #+BEGIN_SRC emacs-lisp :tangle yes
+     (use-package smartparens
+       :straight t)
+   #+END_SRC
+   
+   By default, we turn on smartparens globally (but not strict mode).
+   The default config is pretty good, so let's bring that in as well.
+   #+BEGIN_SRC emacs-lisp :tangle yes
+     (require 'smartparens-config)
+     (smartparens-global-mode)
+   #+END_SRC
+   
+   In other modes (namely lisps) we will want strict mode, so let's also add
+   [[https://github.com/expez/evil-smartparens][evil-smartparens]].
+   #+BEGIN_SRC emacs-lisp :tangle yes
+     (use-package evil-smartparens
+       :straight t)
+   #+END_SRC
+   
+   However, some of the features are still handy, so let's add it as a hook
+   to =prog-mode=.
+   #+BEGIN_SRC emacs-lisp :tangle yes
+     (add-hook 'prog-mode-hook 'evil-smartparens-mode)
+   #+END_SRC
+
+   Here are some helpful keybinds.
+   #+BEGIN_SRC emacs-lisp :tangle yes
+     (evil-define-key 'normal 'global
+       "((" 'sp-wrap-round
+       "([" 'sp-wrap-square
+       "({" 'sp-wrap-curly)
+   #+END_SRC
+
 * LSP
   [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]] provides language services for quite a few languages.
   #+BEGIN_SRC emacs-lisp :tangle yes
@@ -318,6 +452,23 @@ This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfile
     (require 'company-lsp)
     (push 'company-lsp company-backend)
   #+END_SRC
+
+  Next, it's a bit of a pain having to manually set + unset ~lsp-log-io~, so
+  let's write a little helper.
+  #+BEGIN_SRC emacs-lisp :tangle yes
+    (defun lsp-toggle-log-io ()
+	"Toggle `lsp-log-io'"
+	(interactive)
+	(if lsp-log-io
+	    (setq lsp-log-io nil)
+	  (setq lsp-log-io t))
+	(if lsp-print-performance
+	    (setq lsp-print-performance t)
+	  (setq lsp-print-performance nil)))
+  #+END_SRC
+
+  #+RESULTS:
+  : lsp-toggle-log-io
 
 * Tools
 ** Magit
@@ -351,6 +502,26 @@ This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfile
 			       :repo "TOTBWF/counsel-brew")
        :commands counsel-brew)
    #+END_SRC
+** Docker
+   I use =counsel-docker= to manage docker containers.
+   As of right now, this is a WIP, so let's just bring this in from source.
+   #+BEGIN_SRC emacs-lisp :tangle yes
+     (use-package counsel-docker
+       :load-path "~/Documents/projects/counsel-docker")
+   #+END_SRC
+   
+   Next up, let's bind some keys.
+   #+BEGIN_SRC emacs-lisp :tangle yes
+     (evil-define-key 'normal 'global
+       (kbd "SPC d i") 'counsel-docker-image
+       (kbd "SPC d c") 'counsel-docker-container)
+
+     (which-key-add-key-based-replacements
+       "SPC d" "docker"
+       "SPC d i" "images"
+       "SPC d c" "containers")
+   #+END_SRC
+
 * Languages
   This section covers language specific configuration.
 ** Agda
@@ -396,7 +567,7 @@ This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfile
    
    Finally, let's make sure that the =dotnet= executable is available on our path.
    #+BEGIN_SRC emacs-lisp :tangle yes
-     (add-to-list 'exec-path "/usr/local/share/dotnet/")
+     (add-to-path "/usr/local/share/dotnet/")
    #+END_SRC
 ** Typescript
    Typescript is a bit of a pain to get working, mostly due to
@@ -414,3 +585,11 @@ This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfile
    #+END_SRC
    
    Next, let's load the typescript language server.
+   #+BEGIN_SRC emacs-lisp :tangle yes
+     (add-to-list 'auto-mode-alist '("\\.tsx\\'" . web-mode))
+     (add-hook 'web-mode-hook
+	       (lambda ()
+		 (when (string= web-mode-content-type "jsx")
+		   (lsp))))
+   #+END_SRC
+
