@@ -98,6 +98,12 @@ This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfile
   #+BEGIN_SRC emacs-lisp :tangle yes
     (add-to-path "/usr/local/bin/")
   #+END_SRC
+  
+  Make sure to follow symlinks
+  #+BEGIN_SRC emacs-lisp :tangle yes
+      (setq vc-follow-symlinks t)
+  #+END_SRC
+
 * Themes
   There are a few options here, as I haven't totally settled.
 * Interface
@@ -110,8 +116,9 @@ This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfile
     :straight t)
   (evil-mode 1)
   (define-key evil-motion-state-map " " nil)
+  (define-key evil-motion-state-map (kbd ";") 'evil-ex)
   #+END_SRC
-  
+
   Next, let's install [[https://github.com/linktohack/evil-commentary][evil-commentary]], which lets us easily comment out code. 
   #+BEGIN_SRC emacs-lisp :tangle yes
     (use-package evil-commentary
@@ -217,13 +224,17 @@ This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfile
   Some handy bindings for opening files
   #+BEGIN_SRC emacs-lisp :tangle yes
     (evil-define-key 'normal 'global
+      (kbd "SPC f f") 'counsel-find-file
+      (kbd "SPC .") 'counsel-find-file
       (kbd "SPC f r") 'counsel-recentf
       (kbd "SPC f i") (lambda () (interactive) (find-file "~/.emacs.d/init.org")))
 
     (which-key-add-key-based-replacements
       "SPC f" "files"
+      "SPC f f" "find file"
       "SPC f r" "recent files"
-      "SPC f i" "config file")
+      "SPC f i" "config file"
+      "SPC ." "find file")
   #+END_SRC
 ** Windows
   Let's bind window management to some nicer keys
@@ -251,7 +262,7 @@ This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfile
       "SPC wq" "close"
       )
   #+END_SRC
-** Tabs
+** Tabsg
    Let's use emacs 27 recently added tab support to emulate workspaces.
    
    First, let's define a nice ivy interface for selecting which tab to switch to.
@@ -274,7 +285,9 @@ This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfile
        (kbd "SPC t k") 'tab-close
        (kbd "SPC t n") 'tab-new
        (kbd "SPC t r") 'tab-bar-rename-tab
-       (kbd "SPC t b") 'switch-to-buffer-other-tab)
+       (kbd "SPC t b") 'switch-to-buffer-other-tab
+       (kbd "g t") 'tab-next
+       (kbd "g T") 'tab-previous)
 
      (which-key-add-key-based-replacements
        "SPC t" "tabs"
@@ -283,8 +296,13 @@ This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfile
        "SPC t k" "delete tab"
        "SPC t h" "previous tab"
        "SPC t l" "next tab"
-       "SPC t b" "open buffer in tab")
+       "SPC t b" "open buffer in tab"
+       "g t" "next tab"
+       "g T" "previous tab")
    #+END_SRC
+
+   #+RESULTS:
+
 * Org
 ** Babel
    It's a bit annoying that =org-babel= asks for confirmation all the time,
@@ -292,6 +310,34 @@ This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfile
    #+BEGIN_SRC emacs-lisp :tangle yes
      (setq org-confirm-babel-evaluate nil)
    #+END_SRC
+** Jira
+   Let's enable [[https://github.com/ahungry/org-jira][org-jira]].
+   #+BEGIN_SRC emacs-lisp :tangle yes
+     (use-package org-jira
+       :straight t
+       :config
+       (setq jiralib-url "https://bazinga.atlassian.net")
+       (setq org-jira-use-status-as-todo t)
+       (add-to-list 'org-todo-keywords '(sequence
+					 "BACKLOG(b)"
+					 "SELECTED-FOR-DEVELOPMENT(s)"
+					 "IN-PROGRESS(i)"
+					 "IN-REVIEW(r)"
+					 "READY-FOR-QA(q)"
+					 "|"
+					 "DONE(d)"
+					 "REMOVED(R)")))
+   #+END_SRC
+   
+   Next, let's add some nice keybindings
+   #+BEGIN_SRC emacs-lisp :tangle yes
+     (evil-define-key 'global 'normal
+       (kbd "SPC f j") (lambda () (interactive) (find-file org-jira-working-dir)))
+
+     (which-key-add-key-based-replacements
+       "SPC f j" "jira file")
+   #+END_SRC
+
 * Editor
 ** Projectile
   [[https://github.com/bbatsov/projectile][projectile]] is a project system for emacs, which lets find navigate
@@ -533,6 +579,12 @@ This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfile
 
    #+RESULTS:
    : t
+
+** GPG
+   Enable prompting for GPG pins.
+   #+BEGIN_SRC emacs-lisp :tangle yes
+     (setq epa-pinentry-mode 'loopback)
+   #+END_SRC
 
 * Languages
   This section covers language specific configuration.
