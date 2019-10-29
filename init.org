@@ -1,4 +1,4 @@
-#+TITLE: Emacs Configuration
+#+TITLE: BigMacs
 #+AUTHOR: Reed Mullanix
 #+TOC: true
 
@@ -100,18 +100,6 @@ This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfile
   #+END_SRC
 * Themes
   There are a few options here, as I haven't totally settled.
-  
-  The monochrome themes here are pretty nice, but it does make code 
-  kind of hard to read (mostly JSX).
-  #+BEGIN_SRC emacs-lisp :tangle yes
-    (use-package almost-mono-themes
-      :straight t)
-  #+END_SRC
-  
-  #+BEGIN_SRC emacs-lisp :tangle yes
-    (use-package tao-theme
-      :straight t)
-  #+END_SRC
 * Interface
 ** Evil
   [[https://github.com/emacs-evil/evil][evil]] provides us with vim-like keybindings inside of emacs.
@@ -197,17 +185,16 @@ This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfile
       (kbd "SPC h f") 'counsel-describe-function
       (kbd "SPC h v") 'counsel-describe-variable
       (kbd "SPC h F") 'counsel-describe-face
+      (kbd "SPC h m") 'describe-mode
       (kbd "SPC h i") 'info)
-  #+END_SRC
 
-  Next, let's add some =which-key= descriptions
-  #+BEGIN_SRC emacs-lisp :tangle yes
     (which-key-add-key-based-replacements
       "SPC h" "help"
       "SPC h k" "describe key"
       "SPC h f" "describe function"
       "SPC h F" "describe face"
       "SPC h v" "describe variable"
+      "SPC h m" "describe mode"
       "SPC h i" "info")
   #+END_SRC
 ** Buffers
@@ -266,6 +253,20 @@ This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfile
   #+END_SRC
 ** Tabs
    Let's use emacs 27 recently added tab support to emulate workspaces.
+   
+   First, let's define a nice ivy interface for selecting which tab to switch to.
+   #+BEGIN_SRC emacs-lisp :tangle yes
+     (defun counsel-switch-tab ()
+       "Switch to another tab."
+       (interactive)
+       (ivy-read "Tab: " '("Schema.fs" "*ielm*")
+		 ;; (mapcar (lambda (tab) (cdr (assq 'name tab))) (tab-bar-tabs))
+		 :caller 'counsel-switch-tab))
+
+
+   #+END_SRC
+
+
    #+BEGIN_SRC emacs-lisp :tangle yes
      (evil-define-key 'normal 'global
        (kbd "SPC t l") 'tab-next
@@ -490,9 +491,9 @@ This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfile
    Finally, let's give our prefix a nice name!
    #+BEGIN_SRC emacs-lisp :tangle yes
      (which-key-add-key-based-replacements
-       "SPC g" "git")
+       "SPC g" "git"
+       "SPC g g" "status")
    #+END_SRC
-
 ** Brew
    It's a pain having to switch to the terminal to use brew,
    so let's use [[https://github.com/TOTBWF/counsel-brew][counsel-brew]] instead.
@@ -522,6 +523,17 @@ This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfile
        "SPC d c" "containers")
    #+END_SRC
 
+** GraphiQL
+   #+BEGIN_SRC emacs-lisp :tangle yes
+     (use-package graphiql
+       :load-path "~/Documents/projects/graphiql.el"
+       :config
+       (setq graphiql-use-lsp t))
+   #+END_SRC
+
+   #+RESULTS:
+   : t
+
 * Languages
   This section covers language specific configuration.
 ** Agda
@@ -541,13 +553,22 @@ This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfile
 			     :files ("src/data/emacs-mode/*.el"
 				     (:exclude "agda-input.el")))
        :config
-       (add-to-list 'exec-path "/Users/reedmullanix/.local/bin/"))
+       (add-to-list 'exec-path "~/.local/bin/"))
    #+END_SRC
 
+** CSS
+   #+BEGIN_SRC emacs-lisp :tangle yes
+     (add-hook 'less-css-mode-hook #'lsp)
+     (add-hook 'css-mode-hook #'lsp)
+     (setq css-indent-offset 2)
+   #+END_SRC
 ** Emacs Lisp
    Let's enable =flymake-mode= when editing elisp code.
    #+BEGIN_SRC emacs-lisp :tangle yes
+     (use-package lispy
+       :straight t)
      (add-hook 'emacs-lisp-mode-hook 'flymake-mode)
+     (add-hook 'emacs-lisp-mode-hook 'lispy-mode)
    #+END_SRC
 ** F#
    We use [[https://github.com/fsharp/emacs-fsharp-mode][fsharp-mode]] to provide font locking and indentation for F#.
