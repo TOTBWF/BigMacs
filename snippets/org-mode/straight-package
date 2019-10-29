@@ -1,0 +1,10 @@
+# -*- mode: snippet -*-
+# name: straight-package
+# key: <P
+# --
+
+#+BEGIN_SRC emacs-lisp :tangle yes
+$>  (use-package `(completing-read "Package: " (straight-recipes-list))`
+$>    :straight t)
+#+END_SRC
+

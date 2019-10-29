@@ -69,10 +69,15 @@ This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfile
   (setq ring-bell-function 'ignore)
   #+END_SRC
   
-  Backups are also really annoying, so let's disable them all together.
+  Don't fill the filesystem with garbage please.
   #+BEGIN_SRC emacs-lisp :tangle yes
-  (setq make-backup-files nil) 
-  (setq auto-save-default nil)
+    (setq auto-save-file-name-transforms `((".*" ,temporary-file-directory t))
+	  backup-by-copying t
+	  backup-directory-alist '((".*" . "~/.emacs-tmp"))
+	  delete-old-versions t
+	  kept-new-versions 6
+	  kept-old-versions 2
+	  version-control t)
   #+END_SRC
   
   Never, ever use tabs.
@@ -103,7 +108,23 @@ This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfile
   #+BEGIN_SRC emacs-lisp :tangle yes
       (setq vc-follow-symlinks t)
   #+END_SRC
-
+  
+  Highlight matching parens
+  #+BEGIN_SRC emacs-lisp :tangle yes
+    (show-paren-mode)
+  #+END_SRC
+  
+  Highlight between point and selection start.
+  #+BEGIN_SRC emacs-lisp :tangle yes
+    (transient-mark-mode)
+  #+END_SRC
+  
+  Fix scrolling
+  #+BEGIN_SRC emacs-lisp :tangle yes
+  (setq scroll-conservatively 101
+        mouse-wheel-scroll-amount '(1)
+        mouse-wheel-progressive-speed nil)
+  #+END_SRC
 * Themes
   There are a few options here, as I haven't totally settled.
 * Interface
@@ -126,7 +147,6 @@ This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfile
       :config
       (evil-commentary-mode))
   #+END_SRC
-
 ** Ivy
   For our filtering needs, we are going to use ivy.
   To start, let's load up all of the ivy packages.
@@ -262,7 +282,7 @@ This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfile
       "SPC wq" "close"
       )
   #+END_SRC
-** Tabsg
+** Tabs
    Let's use emacs 27 recently added tab support to emulate workspaces.
    
    First, let's define a nice ivy interface for selecting which tab to switch to.
@@ -304,6 +324,9 @@ This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfile
    #+RESULTS:
 
 * Org
+** Keybindings
+   =org-mode= is a monster of a mode, with approximately 50 million keybindings.
+   As such, this is very much a work in progress!
 ** Babel
    It's a bit annoying that =org-babel= asks for confirmation all the time,
    so let's turn it off.
@@ -331,13 +354,12 @@ This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfile
    
    Next, let's add some nice keybindings
    #+BEGIN_SRC emacs-lisp :tangle yes
-     (evil-define-key 'global 'normal
+     (evil-define-key 'normal 'global
        (kbd "SPC f j") (lambda () (interactive) (find-file org-jira-working-dir)))
 
      (which-key-add-key-based-replacements
        "SPC f j" "jira file")
    #+END_SRC
-
 * Editor
 ** Projectile
   [[https://github.com/bbatsov/projectile][projectile]] is a project system for emacs, which lets find navigate
@@ -363,19 +385,31 @@ This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfile
   
   Finally, let's add some nice =which-key= support
   #+BEGIN_SRC emacs-lisp :tangle yes
+    (evil-define-key 'normal 'global
+      (kbd "SPC SPC") 'counsel-projectile-find-file)
     (which-key-add-key-based-replacements
+      "SPC SPC" "find project file"
       "SPC p" "project")
   #+END_SRC
 ** Autocompletion
   For autocompletion, we are going to use [[https://github.com/company-mode/company-mode][company-mode]].
   #+BEGIN_SRC emacs-lisp :tangle yes
     (use-package company
-      :straight t)
+      :straight t
+      :config
+      (setq company-tooltip-align-annotations t
+	    company-idle-delay 0.3
+	    company-echo-delay 0))
   #+END_SRC
   
   For now, let's enable it globally.
   #+BEGIN_SRC emacs-lisp :tangle yes
     (global-company-mode)
+  #+END_SRC
+
+  Start autocompletion when you press tab.
+  #+BEGIN_SRC emacs-lisp :tangle yes
+  (define-key company-mode-map (kbd "TAB") #'company-indent-or-complete-common)
   #+END_SRC
 ** Snippets
    We use [[https://github.com/joaotavora/yasnippet][yasnippet]] for all of our snippeting needs.
@@ -479,6 +513,14 @@ This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfile
        "({" 'sp-wrap-curly)
    #+END_SRC
 
+** Rainbow Parens
+   Turn on [[https://github.com/Fanael/rainbow-delimiters][rainbow-delimiters]].
+   #+BEGIN_SRC emacs-lisp :tangle yes
+     (use-package rainbow-delimiters
+       :straight t
+       :config
+       (rainbow-delimiters-mode))
+   #+END_SRC
 * LSP
   [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]] provides language services for quite a few languages.
   #+BEGIN_SRC emacs-lisp :tangle yes
