@@ -3,8 +3,8 @@
 # key: <P
 # --
 
-#+BEGIN_SRC emacs-lisp :tangle yes
-$>  (use-package `(completing-read "Package: " (straight-recipes-list))`
-$>    :straight t)
+#+BEGIN_SRC emacs-lisp
+  (use-package `(completing-read "Package: " (straight-recipes-list))`
+    :straight t)
 #+END_SRC
 

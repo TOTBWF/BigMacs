@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: cubical-agda-template
+# --
+{-# OPTIONS --cubical --safe #-}
+module `(replace-regexp-in-string "/" "."  (string-remove-suffix ".agda" (string-remove-prefix "src/" (car (projectile-make-relative-to-root (list (buffer-file-name)))))))` where

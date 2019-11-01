@@ -1,13 +1,15 @@
 #+TITLE: BigMacs
 #+AUTHOR: Reed Mullanix
+#+PROPERTY: header-args :tangle yes :results silent
 #+TOC: true
 
 This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfiles/blob/master/config.org/][Jamie Collinsons]].
+There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-guide]] that is quite helpful.
 
 * Setup
 ** Package Management
     First, let's load up some basic bootstrap code for [[https://github.com/raxod502/straight.el][straight.el.]]
-    #+BEGIN_SRC emacs-lisp :tangle yes
+    #+BEGIN_SRC emacs-lisp 
     (defvar bootstrap-version)
 	(let ((bootstrap-file
 	    (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
@@ -23,13 +25,13 @@ This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfile
     #+END_SRC
 
     Now, let's load up [[https://github.com/jwiegley/use-package][use-package]].
-    #+BEGIN_SRC emacs-lisp :tangle yes
+    #+BEGIN_SRC emacs-lisp 
     (straight-use-package 'use-package)
     #+END_SRC
 ** Benchmark Setup
    [[https://github.com/dholm/benchmark-init-el][benchmark-init]] records startup time by package so we can debug. 
    It only records things after it's initialised, so put as early in config as possible.
-   #+BEGIN_SRC emacs-lisp :tangle yes
+   #+BEGIN_SRC emacs-lisp 
    (use-package benchmark-init
      :straight t
      :config
@@ -42,7 +44,7 @@ This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfile
 ** Avoid GC during initialization.
    By default, the GC threshold for emacs is 800kb, so let's bump this up to 
    10MB to avoid GC when initializing.
-   #+BEGIN_SRC emacs-lisp :tangle yes
+   #+BEGIN_SRC emacs-lisp 
    (setq gc-cons-threshold 10000000)
 
    ;; Restore after startup
@@ -52,25 +54,34 @@ This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfile
                (message "gc-cons-threshold restored to %S"
                         gc-cons-threshold)))
    #+END_SRC
+** Binding Keys
+   Let's use [[https://github.com/noctuid/general.el][general.el]] to bind our keys in a more consistent way.
+   #+BEGIN_SRC emacs-lisp  :results silent
+     (use-package general
+       :straight t
+       :config
+       (general-evil-setup)
+       (general-auto-unbind-keys))
+   #+END_SRC
 * Preferences
   Don't show the help screen on startup.
-  #+BEGIN_SRC emacs-lisp :tangle yes
+  #+BEGIN_SRC emacs-lisp 
   (setq inhibit-startup-screen t)
   #+END_SRC
 
   Let's disable some un-needed window decorations.
-  #+BEGIN_SRC emacs-lisp :tangle yes
+  #+BEGIN_SRC emacs-lisp 
   (tool-bar-mode -1)
   (scroll-bar-mode -1) 
   #+END_SRC
 
   The error bell is really obnoxious, so let's just turn it off.
-  #+BEGIN_SRC emacs-lisp :tangle yes
+  #+BEGIN_SRC emacs-lisp 
   (setq ring-bell-function 'ignore)
   #+END_SRC
   
   Don't fill the filesystem with garbage please.
-  #+BEGIN_SRC emacs-lisp :tangle yes
+  #+BEGIN_SRC emacs-lisp 
     (setq auto-save-file-name-transforms `((".*" ,temporary-file-directory t))
 	  backup-by-copying t
 	  backup-directory-alist '((".*" . "~/.emacs-tmp"))
@@ -81,76 +92,173 @@ This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfile
   #+END_SRC
   
   Never, ever use tabs.
-  #+BEGIN_SRC emacs-lisp :tangle yes
+  #+BEGIN_SRC emacs-lisp 
     (setq indent-tabs-mode nil)
   #+END_SRC
   
   Make 'yes or no' prompts shorter.
-  #+BEGIN_SRC emacs-lisp :tangle yes
+  #+BEGIN_SRC emacs-lisp 
     (defalias 'yes-or-no-p 'y-or-n-p)
   #+END_SRC
 
   
   For whatever reason, adding things to ~exec-path~ can be a bit wonky, so let's define
   a helper for doing just that.
-  #+BEGIN_SRC emacs-lisp :tangle yes
+  #+BEGIN_SRC emacs-lisp 
     (defun add-to-path (path)
       (add-to-list 'exec-path path)
       (setenv "PATH" (concat path ":" (getenv "PATH"))))
   #+END_SRC
 
   A lot of our commands live inside of ~/usr/local/bin~, so let's load it up!
-  #+BEGIN_SRC emacs-lisp :tangle yes
+  #+BEGIN_SRC emacs-lisp 
     (add-to-path "/usr/local/bin/")
   #+END_SRC
   
   Make sure to follow symlinks
-  #+BEGIN_SRC emacs-lisp :tangle yes
+  #+BEGIN_SRC emacs-lisp 
       (setq vc-follow-symlinks t)
   #+END_SRC
   
   Highlight matching parens
-  #+BEGIN_SRC emacs-lisp :tangle yes
+  #+BEGIN_SRC emacs-lisp 
     (show-paren-mode)
   #+END_SRC
   
   Highlight between point and selection start.
-  #+BEGIN_SRC emacs-lisp :tangle yes
+  #+BEGIN_SRC emacs-lisp 
     (transient-mark-mode)
   #+END_SRC
   
   Fix scrolling
-  #+BEGIN_SRC emacs-lisp :tangle yes
+  #+BEGIN_SRC emacs-lisp 
   (setq scroll-conservatively 101
         mouse-wheel-scroll-amount '(1)
         mouse-wheel-progressive-speed nil)
   #+END_SRC
 * Themes
   There are a few options here, as I haven't totally settled.
-* Interface
-** Evil
-  [[https://github.com/emacs-evil/evil][evil]] provides us with vim-like keybindings inside of emacs.
-  #+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package evil
-    :init
-    (setq evil-want-C-u-scroll t)
-    :straight t)
-  (evil-mode 1)
-  (define-key evil-motion-state-map " " nil)
-  (define-key evil-motion-state-map (kbd ";") 'evil-ex)
+  #+BEGIN_SRC emacs-lisp
+    (use-package doom-themes
+      :straight t
+      :config
+      (load-theme 'doom-one t))
+  #+END_SRC
+  
+  #+BEGIN_SRC emacs-lisp
+    (use-package wilmersdorf-theme
+      :straight (wilmersdorf :type git :host github :repo "ianpan870102/wilmersdorf-emacs-theme"
+			     :files ("wilmersdorf-theme.el")))
   #+END_SRC
 
+* Interface
+** Which Key
+  First, let's add [[https://github.com/justbur/emacs-which-key][which-key]].
+  #+BEGIN_SRC emacs-lisp 
+  (use-package which-key
+    :straight t)
+  (which-key-mode)
+  #+END_SRC
+
+  To enable custom prefix names, we need to set =which-key-enable-extended-define-key=.
+  #+BEGIN_SRC emacs-lisp 
+  (setq which-key-enable-extended-define-key t)
+  #+END_SRC
+  
+  Finally, lets enable =which-key-mode=.
+  #+BEGIN_SRC emacs-lisp 
+    (which-key-mode 1)
+  #+END_SRC
+** Evil
+  [[https://github.com/emacs-evil/evil][evil]] provides us with vim-like keybindings inside of emacs.
+  
+  First, let's load up evil. Make note of the section that
+  binds =leader-map= to =SPC=.
+  #+BEGIN_SRC emacs-lisp  :results silent
+    (use-package evil
+      :straight t
+      :init
+      (setq evil-want-keybinding nil)
+      (setq evil-want-C-u-scroll t)
+      :config
+      (evil-mode 1)
+      :after (general)
+      :general
+      (general-mmap ";" 'evil-ex))
+  #+END_SRC
+
+
   Next, let's install [[https://github.com/linktohack/evil-commentary][evil-commentary]], which lets us easily comment out code. 
-  #+BEGIN_SRC emacs-lisp :tangle yes
+  #+BEGIN_SRC emacs-lisp 
     (use-package evil-commentary
       :straight t
       :config
       (evil-commentary-mode))
   #+END_SRC
+  
+  Finally, let's install [[https://github.com/emacs-evil/evil-collection][evil-collection]].
+  #+BEGIN_SRC emacs-lisp
+    (use-package evil-collection
+      :straight t
+      :after evil
+      :config
+      (setq evil-collection-mode-list nil)
+      (evil-collection-init 'xref)
+      (evil-collection-init 'dired)
+      (evil-collection-init 'flymake))
+  #+END_SRC
+*** Keybinding
+  To begin, let's use =general.el= to create a base "definer".
+  This starts everything with a =SPC= prefix, and sticks
+  it in the =general-override-mode-map= map, which overrides
+  other keybindings.
+  #+BEGIN_SRC emacs-lisp 
+    (general-create-definer global-definer
+      :states '(insert emacs normal hybrid motion visual operator)
+      :prefix "SPC"
+      :non-normal-prefix "C-SPC")
+  #+END_SRC
+  
+  Next, let's create a macro that makes definers for each nested prefix maps.
+  This lets us re-use each defininer, and prevent clobbering of definitions.
+  #+BEGIN_SRC emacs-lisp
+    (defmacro general-global-menu-definer (def infix-key &rest body)
+      "Create a definer named general-global-DEF wrapping global-definer.
+    The prefix map is named 'my-DEF-map'."
+      (let ((definer-name (intern (concat "general-global-" def)))
+	    (unless (fboundp definer-name)
+		`(progn
+		   (general-create-definer ,definer-name
+		     :wrapping global-definer
+		     :prefix-map (quote ,(intern (concat "my-" def "-map")))
+		     :infix ,infix-key
+		     :wk-full-keys nil
+		     "" '(:ignore t :which-key ,def))
+		   (,definer-name
+		    ,@body))))))
+  #+END_SRC
+  
+  Now, let's also make a quick helper for adding mode-specific motions.
+  #+BEGIN_SRC emacs-lisp
+    (defmacro general-motion-definer (mode &rest body)
+      `(general-add-hook ,mode
+			 (lambda ()
+			   (general-define-key
+			    :states 'normal
+			    :keymaps 'local
+			    :prefix "g"
+			    ,@body))))
+  #+END_SRC
 ** Ivy
   For our filtering needs, we are going to use ivy.
-  To start, let's load up all of the ivy packages.
-  #+BEGIN_SRC emacs-lisp :tangle yes
+  To start, let's load up =ivy=.
+
+  By default =ivy= starts every regex with ~^~. I find this annoying,
+  so let's just set it to an empty string.
+  
+  Also, the default =evil= search is nowhere as good as swiper, so
+  let's replace it all together.
+  #+BEGIN_SRC emacs-lisp 
     (use-package ivy
       :straight t
       :init
@@ -158,186 +266,186 @@ This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfile
 	    '((counsel-rg . ivy--regex-plus)
 	      (swiper . ivy--regex-plus)
 	      (t . ivy--regex-ignore-order)))
-      :config
       (ivy-mode 1)
-      :bind (:map evil-motion-state-map
-		  ("/" . 'swiper)))
+      :config
+      :general
 
-    (use-package hydra
-      :straight t)
-
+      (general-mmap "/" 'swiper))
+  #+END_SRC
+  
+  Next, let's load up =counsel=.
+  #+BEGIN_SRC emacs-lisp
     (use-package counsel
       :straight t
       :config
       (counsel-mode 1)
-      :bind (:map evil-motion-state-map
-	     ("SPC ." . 'counsel-find-file)
-	     :map global-map
-	     ("M-x" . 'counsel-M-x)))
+      (setq ivy-initial-inputs-alist nil)
+      :general
+      ("M-x" 'counsel-M-x)
+      (global-definer "SPC" '(counsel-M-x :wk "M-x")))
+  #+END_SRC
+  
+  Finally, let's load =hydra= and friends.
+  #+BEGIN_SRC emacs-lisp
+    (use-package hydra
+      :straight t)
+
 
     (use-package ivy-hydra
       :straight t
       :after (ivy hydra))
   #+END_SRC
-  
-  By default =ivy= starts every regex with ~^~. I find this annoying,
-  so let's just set it to an empty string.
-  #+BEGIN_SRC emacs-lisp :tangle yes
-    (setq ivy-initial-inputs-alist nil)
-  #+END_SRC
-** Which Key
-  Next, let's add [[https://github.com/justbur/emacs-which-key][which-key]].
-  #+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package which-key
-    :straight t)
-  (which-key-mode)
-  #+END_SRC
-
-  To enable custom prefix names, we need to set =which-key-enable-extended-define-key=.
-  #+BEGIN_SRC emacs-lisp :tangle yes
-  (setq which-key-enable-extended-define-key t)
-  #+END_SRC
-  
-  Finally, lets enable =which-key-mode=.
-  #+BEGIN_SRC emacs-lisp :tangle yes
-    (which-key-mode 1)
-  #+END_SRC
 ** Modeline
+   Let's add =diminish= so that we can easily theme the modeline.
+   #+BEGIN_SRC emacs-lisp
+     (use-package diminish
+       :straight t
+       :init
+       (diminish 'auto-revert-mode)
+       (diminish 'projectile-mode)
+       (diminish 'lispy-mode)
+       (diminish 'yas-minor-mode)
+       (diminish 'ivy-mode)
+       (diminish 'counsel-mode)
+       (diminish 'company-mode)
+       (diminish 'smartparens-mode)
+       (diminish 'which-key-mode)
+       (diminish 'eldoc-mode)
+       (add-hook 'undo-tree-mode-hook (lambda () (diminish 'undo-tree-mode))))
+   #+END_SRC
+   
+   Next, let's add some helpful indicators.
+   #+BEGIN_SRC emacs-lisp
+     (display-time-mode 1)
+     (display-battery-mode 1)
+   #+END_SRC
 ** Help
   First, let's bind some of the =describe= functions
   to keys that are more in line with vim.
-  #+BEGIN_SRC emacs-lisp :tangle yes
-    (evil-define-key 'normal 'global
-      (kbd "SPC h k") 'describe-key
-      (kbd "SPC h f") 'counsel-describe-function
-      (kbd "SPC h v") 'counsel-describe-variable
-      (kbd "SPC h F") 'counsel-describe-face
-      (kbd "SPC h m") 'describe-mode
-      (kbd "SPC h i") 'info)
-
-    (which-key-add-key-based-replacements
-      "SPC h" "help"
-      "SPC h k" "describe key"
-      "SPC h f" "describe function"
-      "SPC h F" "describe face"
-      "SPC h v" "describe variable"
-      "SPC h m" "describe mode"
-      "SPC h i" "info")
+  #+BEGIN_SRC emacs-lisp  :results silent
+    (general-global-menu-definer "help" "h"
+      "k" '(describe-key              :wk "describe key")
+      "F" '(counsel-faces             :wk "describe face")
+      "f" '(counsel-describe-function :wk "describe function")
+      "v" '(counsel-describe-variable :wk "describe variable")
+      "m" '(describe-mode             :wk "describe mode")
+      "i" '(info                      :wk "info")
+      "D" '(toggle-debug-on-error     :wk "toggle debugger"))
   #+END_SRC
 ** Buffers
   Let's bind buffer management to some nicer keys.
-  #+BEGIN_SRC emacs-lisp :tangle yes
-    (evil-define-key 'normal 'global
-      (kbd "SPC ,") 'ivy-switch-buffer
-      (kbd "SPC b b") 'ivy-switch-buffer
-      (kbd "SPC b k") 'kill-current-buffer)
-  #+END_SRC
-  Next, let's make =which-key= display our key bindings in a nice way.
-  #+BEGIN_SRC emacs-lisp :tangle yes
-    (which-key-add-key-based-replacements
-      "SPC ," "switch buffer"
-      "SPC b" "buffer"
-      "SPC b b" "switch buffer"
-      "SPC bk" "kill")
+  #+BEGIN_SRC emacs-lisp 
+    (defun open-scratch-buffer ()
+      (interactive)
+      (display-buffer (get-buffer-create "*scratch*")))
+
+    (general-global-menu-definer "buffer" "b"
+      "b" '(counsel-switch-buffer :wk "switch buffer")
+      "d" '(kill-current-buffer   :wk "kill buffer")
+      "r" '(rename-buffer         :wk "rename buffer"))
+
+    (global-definer
+      "," '(counsel-switch-buffer :wk "switch buffer")
+      "x" '(open-scratch-buffer   :wk "scratch buffer"))
   #+END_SRC
 ** Files
-  Some handy bindings for opening files
-  #+BEGIN_SRC emacs-lisp :tangle yes
-    (evil-define-key 'normal 'global
-      (kbd "SPC f f") 'counsel-find-file
-      (kbd "SPC .") 'counsel-find-file
-      (kbd "SPC f r") 'counsel-recentf
-      (kbd "SPC f i") (lambda () (interactive) (find-file "~/.emacs.d/init.org")))
+  Some handy bindings for opening files.
+  #+BEGIN_SRC emacs-lisp 
+    (defun open-config-file ()
+      (interactive)
+      (find-file "~/.emacs.d/init.org"))
 
-    (which-key-add-key-based-replacements
-      "SPC f" "files"
-      "SPC f f" "find file"
-      "SPC f r" "recent files"
-      "SPC f i" "config file"
-      "SPC ." "find file")
+    (defun open-straight-repo ()
+      (interactive)
+      (counsel-find-file "~/.emacs.d/straight/repos/"))
+
+    (general-global-menu-definer "file" "f"
+				 "f" '(counsel-find-file  :wk "find file")
+				 "r" '(counsel-recentf    :wk "recent files")
+				 "s" '(open-straight-repo :wk "straight repo")
+				 "i" '(open-config-file   :wk "config file"))
+
+    (global-definer
+      "." '(counsel-find-file :wk "find file"))
   #+END_SRC
 ** Windows
   Let's bind window management to some nicer keys
-  #+BEGIN_SRC emacs-lisp :tangle yes
-    (evil-global-set-key 'normal (kbd "SPC w h") 'evil-window-left)
-    (evil-global-set-key 'normal (kbd "SPC w k") 'evil-window-up)
-    (evil-global-set-key 'normal (kbd "SPC w j") 'evil-window-down)
-    (evil-global-set-key 'normal (kbd "SPC w l") 'evil-window-right)
-
-    (evil-global-set-key 'normal (kbd "SPC w v") 'evil-window-vsplit)
-    (evil-global-set-key 'normal (kbd "SPC w s") 'evil-window-split)
-    (evil-global-set-key 'normal (kbd "SPC w q") 'evil-window-delete)
-  #+END_SRC
-
-  Next, let's make =which-key= display our key bindings in a nice way.
-  #+BEGIN_SRC emacs-lisp :tangle yes
-    (which-key-add-key-based-replacements
-      "SPC w" "window"
-      "SPC wh" "left"
-      "SPC wk" "up"
-      "SPC wj" "down"
-      "SPC wl" "right"
-      "SPC wv" "vertical split"
-      "SPC ws" "horizontal split"
-      "SPC wq" "close"
-      )
+  #+BEGIN_SRC emacs-lisp 
+    (general-global-menu-definer "window" "w"
+     "h" '(evil-window-left   :wk "left")
+     "j" '(evil-window-down   :wk "down")
+     "k" '(evil-window-up     :wk "up")
+     "l" '(evil-window-right  :wk "right")
+     "v" '(evil-window-vsplit :wk "vertical split")
+     "s" '(evil-window-split  :wk "horizontal split")
+     "d" '(evil-window-delete :wk "close"))
   #+END_SRC
 ** Tabs
    Let's use emacs 27 recently added tab support to emulate workspaces.
    
    First, let's define a nice ivy interface for selecting which tab to switch to.
-   #+BEGIN_SRC emacs-lisp :tangle yes
+   #+BEGIN_SRC emacs-lisp
      (defun counsel-switch-tab ()
        "Switch to another tab."
        (interactive)
-       (ivy-read "Tab: " '("Schema.fs" "*ielm*")
-		 ;; (mapcar (lambda (tab) (cdr (assq 'name tab))) (tab-bar-tabs))
+       (ivy-read "Tab: " (mapcar (lambda (tab) (cdr (assq 'name tab))) (tab-bar-tabs))
+		 :action 'tab-bar-switch-to-tab
 		 :caller 'counsel-switch-tab))
-
-
+   #+END_SRC
+   
+   Let's also define a nice way to dump and load tab configurations.
+   #+BEGIN_SRC emacs-lisp
+     (defun save-tab ()
+       (let ((saved-tabs (read (get-file-buffer (expand-file-name "tabs" user-emacs-directory))))))
+       saved-tabs)
    #+END_SRC
 
 
-   #+BEGIN_SRC emacs-lisp :tangle yes
-     (evil-define-key 'normal 'global
-       (kbd "SPC t l") 'tab-next
-       (kbd "SPC t h") 'tab-previous
-       (kbd "SPC t k") 'tab-close
-       (kbd "SPC t n") 'tab-new
-       (kbd "SPC t r") 'tab-bar-rename-tab
-       (kbd "SPC t b") 'switch-to-buffer-other-tab
-       (kbd "g t") 'tab-next
-       (kbd "g T") 'tab-previous)
-
-     (which-key-add-key-based-replacements
-       "SPC t" "tabs"
-       "SPC t n" "new tab"
-       "SPC t r" "rename tab"
-       "SPC t k" "delete tab"
-       "SPC t h" "previous tab"
-       "SPC t l" "next tab"
-       "SPC t b" "open buffer in tab"
-       "g t" "next tab"
-       "g T" "previous tab")
+   Let's bind some keys!
+   #+BEGIN_SRC emacs-lisp
+     (general-global-menu-definer "tab" "t"
+       "h" '(tab-previous               :wk "previous")
+       "l" '(tab-next                   :wk "next")
+       "n" '(tab-new                    :wk "new")
+       "d" '(tab-close                  :wk "close")
+       "r" '(tab-bar-rename-tab         :wk "rename")
+       "b" '(switch-to-buffer-other-tab :wk "open buffer in tab")
+       "f" '(find-file-other-tab        :wk "open file in tab")
+       "t" '(counsel-switch-tab         :wk "switch tab"))
    #+END_SRC
-
-   #+RESULTS:
-
+   
+   Let's also bind some quick extra conveinent bindings.
+   #+BEGIN_SRC emacs-lisp
+     (global-definer
+       "g t" '(tab-next     :wk "next tab")
+       "g T" '(tab-previous :wk "next tab"))
+   #+END_SRC
+** Toggles
+   Sometimes it's useful to be able to toggle on and off some features
+   at will.
 * Org
 ** Keybindings
-   =org-mode= is a monster of a mode, with approximately 50 million keybindings.
+   =org-mode= is a monster of a
+mode, with approximately 50 million keybindings.
    As such, this is very much a work in progress!
 ** Babel
    It's a bit annoying that =org-babel= asks for confirmation all the time,
    so let's turn it off.
-   #+BEGIN_SRC emacs-lisp :tangle yes
+   #+BEGIN_SRC emacs-lisp 
      (setq org-confirm-babel-evaluate nil)
+   #+END_SRC
+** Writing
+   #+BEGIN_SRC emacs-lisp
+     (use-package writeroom-mode
+       :straight t)
    #+END_SRC
 ** Jira
    Let's enable [[https://github.com/ahungry/org-jira][org-jira]].
-   #+BEGIN_SRC emacs-lisp :tangle yes
+   #+BEGIN_SRC emacs-lisp 
      (use-package org-jira
        :straight t
+       :hook (org-mode . org-jira-mode)
+       :commands (counsel-jira-find-file)
        :config
        (setq jiralib-url "https://bazinga.atlassian.net")
        (setq org-jira-use-status-as-todo t)
@@ -352,48 +460,48 @@ This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfile
 					 "REMOVED(R)")))
    #+END_SRC
    
-   Next, let's add some nice keybindings
-   #+BEGIN_SRC emacs-lisp :tangle yes
-     (evil-define-key 'normal 'global
-       (kbd "SPC f j") (lambda () (interactive) (find-file org-jira-working-dir)))
-
-     (which-key-add-key-based-replacements
-       "SPC f j" "jira file")
+   Now, let's define a helper function for opening up the jira directory.
+   #+BEGIN_SRC emacs-lisp
+     (defun counsel-find-jira-file ()
+       (interactive)
+       (counsel-find-file org-jira-working-dir))
+   #+END_SRC
+   
+   Finally, let's bind that helper function to a key
+   #+BEGIN_SRC emacs-lisp
+       (general-global-menu-definer "file" "f"
+	 "j" '(counsel-find-jira-file :wk "jira file"))
    #+END_SRC
 * Editor
 ** Projectile
   [[https://github.com/bbatsov/projectile][projectile]] is a project system for emacs, which lets find navigate
   our projects much faster.
-  #+BEGIN_SRC emacs-lisp :tangle yes
+  #+BEGIN_SRC emacs-lisp 
     (use-package projectile
       :straight t)
   #+END_SRC
   
   To integrate =projectile= into our =ivy= based workflow, we are going to use
   [[https://github.com/ericdanan/counsel-projectile][counsel-projectile]].
-  #+BEGIN_SRC emacs-lisp :tangle yes
+  #+BEGIN_SRC emacs-lisp 
     (use-package counsel-projectile
       :straight t)
   #+END_SRC
   
   Finally, let's enable =projectile-mode= globally, and bind the keymap.
-  #+BEGIN_SRC emacs-lisp :tangle yes
-    (evil-define-key 'normal projectile-mode-map (kbd "SPC p") 'projectile-command-map)
+  #+BEGIN_SRC emacs-lisp 
     (projectile-mode 1)
     (counsel-projectile-mode 1)
   #+END_SRC
   
-  Finally, let's add some nice =which-key= support
-  #+BEGIN_SRC emacs-lisp :tangle yes
-    (evil-define-key 'normal 'global
-      (kbd "SPC SPC") 'counsel-projectile-find-file)
-    (which-key-add-key-based-replacements
-      "SPC SPC" "find project file"
-      "SPC p" "project")
+  Next, let's bind some keys!
+  #+BEGIN_SRC emacs-lisp 
+    (global-definer
+      "p"   '(:keymap projectile-command-map :package projectile :wk "project"))
   #+END_SRC
 ** Autocompletion
   For autocompletion, we are going to use [[https://github.com/company-mode/company-mode][company-mode]].
-  #+BEGIN_SRC emacs-lisp :tangle yes
+  #+BEGIN_SRC emacs-lisp 
     (use-package company
       :straight t
       :config
@@ -403,41 +511,48 @@ This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfile
   #+END_SRC
   
   For now, let's enable it globally.
-  #+BEGIN_SRC emacs-lisp :tangle yes
+  #+BEGIN_SRC emacs-lisp 
     (global-company-mode)
   #+END_SRC
 
   Start autocompletion when you press tab.
-  #+BEGIN_SRC emacs-lisp :tangle yes
-  (define-key company-mode-map (kbd "TAB") #'company-indent-or-complete-common)
+  #+BEGIN_SRC emacs-lisp 
+    (define-key company-mode-map (kbd "TAB") #'company-indent-or-complete-common)
   #+END_SRC
 ** Snippets
    We use [[https://github.com/joaotavora/yasnippet][yasnippet]] for all of our snippeting needs.
-   #+BEGIN_SRC emacs-lisp :tangle yes
+   #+BEGIN_SRC emacs-lisp 
      (use-package yasnippet
        :straight t)
    #+END_SRC
    
    The default yas bindings are pretty hard to use, so let's rebind them.
-   #+BEGIN_SRC emacs-lisp :tangle yes
-     (evil-define-key 'normal 'global
-       (kbd "SPC s n") 'yas-new-snippet
-       (kbd "SPC s i") 'yas-insert-snippet
-       (kbd "SPC s e") 'yas-visit-snippet-file)
-   #+END_SRC
-   
-   As per usual, let's use =which-key= to give these nicer names.
-   #+BEGIN_SRC emacs-lisp :tangle yes
-     (which-key-add-key-based-replacements
-       "SPC s" "snippets"
-       "SPC s n" "new snippet"
-       "SPC s i" "insert snippet"
-       "SPC s e" "edit snippet")
+   #+BEGIN_SRC emacs-lisp 
+     (general-global-menu-definer "snippet" "s"
+      "n" '(yas-new-snippet        :wk "new")
+      "i" '(yas-insert-snippet     :wk "insert")
+      "e" '(yas-visit-snippet-file :wk "edit"))
    #+END_SRC
 
    Lets enable =yasnippet= globally.
-   #+BEGIN_SRC emacs-lisp :tangle yes
+   #+BEGIN_SRC emacs-lisp 
      (yas-global-mode 1)
+   #+END_SRC
+** AutoInsert
+   Let's use a blend of =auto-insert= and =yassnippet= to handle file templates.
+   #+BEGIN_SRC emacs-lisp
+     (defun create-file-template (regex template mode)
+       (add-to-list 'auto-insert-alist
+		    `(,regex .  [(lambda () (yas-expand-snippet (yas-lookup-snippet ,template ',mode)))])))
+   #+END_SRC
+
+   #+BEGIN_SRC emacs-lisp
+     (use-package autoinsert
+       :config
+       (setq auto-insert-query nil) 	       ;; Don't ask the user before inserting
+       (auto-insert-mode 1)
+       (add-hook 'find-file-hook 'auto-insert) ;; After a file is opened, insert.
+       (setq auto-insert-alist nil))
    #+END_SRC
 ** Flymake
    We use =flymake= to handle displaying errors inside of buffers.
@@ -445,7 +560,7 @@ This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfile
    
    For starters, =flymake= doesn't show errors in a posframe, so we need to install
    [[https://github.com/Ladicle/flymake-posframe][flymake-posframe]] for that.
-   #+BEGIN_SRC emacs-lisp :tangle yes
+   #+BEGIN_SRC emacs-lisp 
      (use-package flymake-posframe
        :straight (flymake-posframe :type git :host github
 				   :repo "Ladicle/flymake-posframe")
@@ -453,23 +568,19 @@ This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfile
    #+END_SRC
    
    Next, let's add some nice keybindings.
-   #+BEGIN_SRC emacs-lisp :tangle yes
-     (evil-define-key 'normal 'global
-       (kbd "SPC e j") 'flymake-goto-next-error
-       (kbd "SPC e k") 'flymake-goto-prev-error
-       (kbd "SPC e e") 'flymake-show-diagnostics-buffer)
+   #+BEGIN_SRC emacs-lisp 
+     (general-global-menu-definer "error" "e")
 
-     (which-key-add-key-based-replacements
-       "SPC e" "errors"
-       "SPC e j" "next error"
-       "SPC e k" "previous error"
-       "SPC e e" "display errors")
+     (general-global-error
+      "j" '(flymake-goto-next-error :wk "next error")
+      "k" '(flymake-goto-prev-error :wk "previous error")
+      "e" '(flymake-show-diagnostics-buffer :wk "display errors"))
    #+END_SRC
    
    Now, the =flymake= diagnostic buffer will pop up somewhat randomly, so let's make sure it only
    ever pops up at the bottom.
    
-   #+BEGIN_SRC emacs-lisp :tangle yes
+   #+BEGIN_SRC emacs-lisp 
      (add-to-list 'display-buffer-alist
 		  '("\\*Flymake diagnostics*"
 		    (display-buffer-below-selected display-buffer-at-bottom)
@@ -480,33 +591,20 @@ This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfile
 ** SmartParens
    [[https://github.com/Fuco1/smartparens][smartparens]] provides a bunch of utilities for handling
    pairs in emacs.
-   #+BEGIN_SRC emacs-lisp :tangle yes
+   #+BEGIN_SRC emacs-lisp 
      (use-package smartparens
        :straight t)
    #+END_SRC
    
    By default, we turn on smartparens globally (but not strict mode).
    The default config is pretty good, so let's bring that in as well.
-   #+BEGIN_SRC emacs-lisp :tangle yes
+   #+BEGIN_SRC emacs-lisp 
      (require 'smartparens-config)
      (smartparens-global-mode)
    #+END_SRC
    
-   In other modes (namely lisps) we will want strict mode, so let's also add
-   [[https://github.com/expez/evil-smartparens][evil-smartparens]].
-   #+BEGIN_SRC emacs-lisp :tangle yes
-     (use-package evil-smartparens
-       :straight t)
-   #+END_SRC
-   
-   However, some of the features are still handy, so let's add it as a hook
-   to =prog-mode=.
-   #+BEGIN_SRC emacs-lisp :tangle yes
-     (add-hook 'prog-mode-hook 'evil-smartparens-mode)
-   #+END_SRC
-
    Here are some helpful keybinds.
-   #+BEGIN_SRC emacs-lisp :tangle yes
+   #+BEGIN_SRC emacs-lisp 
      (evil-define-key 'normal 'global
        "((" 'sp-wrap-round
        "([" 'sp-wrap-square
@@ -515,36 +613,67 @@ This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfile
 
 ** Rainbow Parens
    Turn on [[https://github.com/Fanael/rainbow-delimiters][rainbow-delimiters]].
-   #+BEGIN_SRC emacs-lisp :tangle yes
+   #+BEGIN_SRC emacs-lisp 
      (use-package rainbow-delimiters
-       :straight t
-       :config
-       (rainbow-delimiters-mode))
+       :straight t)
    #+END_SRC
+   
+   #+BEGIN_SRC emacs-lisp
+     (add-hook 'prog-mode-hook 'rainbow-delimiters-mode)
+   #+END_SRC
+
+** XRef
+   Let's make the xref buffer a little less intrusive.
+   #+BEGIN_SRC emacs-lisp
+     (add-to-list 'display-buffer-alist
+		  '("\\*xref\\*"
+		    (display-buffer-below-selected display-buffer-at-bottom)
+		    (inhibit-same-window . t)
+		    (window-height . 10)))
+   #+END_SRC
+   
+   Next, let's add some nifty keybindings!
+   #+BEGIN_SRC emacs-lisp
+     (general-motion-definer
+      'xref--xref-buffer-mode-hook
+      "k" 'xref-prev-line
+      "j" 'xref-next-line)
+   #+END_SRC
+
 * LSP
   [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]] provides language services for quite a few languages.
-  #+BEGIN_SRC emacs-lisp :tangle yes
+  #+BEGIN_SRC emacs-lisp 
     (use-package lsp-mode
       :straight t
-      :commands lsp)
+      :commands lsp
+      :init
+      (general-motion-definer
+       'lsp-mode-hook
+       "d" 'lsp-find-definition))
   #+END_SRC
 
   Next, let's add [[https://github.com/tigersoldier/company-lsp][company-lsp]] for autocompletion support.
-  #+BEGIN_SRC emacs-lisp :tangle yes
+  #+BEGIN_SRC emacs-lisp 
     (use-package company-lsp
       :straight t
       :commands company-lsp)
   #+END_SRC
   
+  Next, let's redefine =g d= when =lsp-mode= is active.
+  #+BEGIN_SRC emacs-lisp
+
+  #+END_SRC
+
+  
   Once that's installed, we have to register it as a company backend.
-  #+BEGIN_SRC emacs-lisp :tangle yes
+  #+BEGIN_SRC emacs-lisp 
     (require 'company-lsp)
     (push 'company-lsp company-backend)
   #+END_SRC
 
   Next, it's a bit of a pain having to manually set + unset ~lsp-log-io~, so
   let's write a little helper.
-  #+BEGIN_SRC emacs-lisp :tangle yes
+  #+BEGIN_SRC emacs-lisp 
     (defun lsp-toggle-log-io ()
 	"Toggle `lsp-log-io'"
 	(interactive)
@@ -555,37 +684,31 @@ This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfile
 	    (setq lsp-print-performance t)
 	  (setq lsp-print-performance nil)))
   #+END_SRC
-
-  #+RESULTS:
-  : lsp-toggle-log-io
-
 * Tools
 ** Magit
    To start, let's install [[https://github.com/magit/magit][magit]].
-   #+BEGIN_SRC emacs-lisp :tangle yes
+   #+BEGIN_SRC emacs-lisp 
      (use-package magit
-       :straight t
-       :bind (:map evil-motion-state-map
-		   ("SPC g g" . 'magit-status)))
+       :straight t)
    #+END_SRC
    
    =magit= is a fantastic tool, but the keybindings don't quite line up with =evil=.
    Let's change that by using [[https://github.com/emacs-evil/evil-magit][evil-magit]].
-   #+BEGIN_SRC emacs-lisp :tangle yes
+   #+BEGIN_SRC emacs-lisp 
      (use-package evil-magit
        :straight t)
    #+END_SRC
    
-   Finally, let's give our prefix a nice name!
-   #+BEGIN_SRC emacs-lisp :tangle yes
-     (which-key-add-key-based-replacements
-       "SPC g" "git"
-       "SPC g g" "status")
+   Now, let's bind some keys!
+   #+BEGIN_SRC emacs-lisp
+     (general-global-menu-definer "git" "g")
+     (general-global-git
+      "g" '(magit-status :wk "status"))
    #+END_SRC
 ** Brew
    It's a pain having to switch to the terminal to use brew,
    so let's use [[https://github.com/TOTBWF/counsel-brew][counsel-brew]] instead.
-   #+BEGIN_SRC emacs-lisp :tangle yes
+   #+BEGIN_SRC emacs-lisp 
      (use-package counsel-brew
        :straight (counsel-brew :type git :host github
 			       :repo "TOTBWF/counsel-brew")
@@ -594,13 +717,13 @@ This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfile
 ** Docker
    I use =counsel-docker= to manage docker containers.
    As of right now, this is a WIP, so let's just bring this in from source.
-   #+BEGIN_SRC emacs-lisp :tangle yes
+   #+BEGIN_SRC emacs-lisp 
      (use-package counsel-docker
        :load-path "~/Documents/projects/counsel-docker")
    #+END_SRC
    
    Next up, let's bind some keys.
-   #+BEGIN_SRC emacs-lisp :tangle yes
+   #+BEGIN_SRC emacs-lisp 
      (evil-define-key 'normal 'global
        (kbd "SPC d i") 'counsel-docker-image
        (kbd "SPC d c") 'counsel-docker-container)
@@ -612,35 +735,51 @@ This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfile
    #+END_SRC
 
 ** GraphiQL
-   #+BEGIN_SRC emacs-lisp :tangle yes
-     (use-package graphiql
-       :load-path "~/Documents/projects/graphiql.el"
-       :config
-       (setq graphiql-use-lsp t))
+   #+BEGIN_SRC emacs-lisp 
+	  (use-package graphiql
+	    :straight (graphiql :type git :host github :repo "OTBWF/graphiql.el")
+	    :config
+	    (setq graphiql-use-lsp t)
+	    (general-motion-definer
+	     'graphiql-mode-hook
+	     "j" '(graphiql-next-query     :wk "next query")
+	     "k" '(graphiql-previous-query :wk "previous query")))
    #+END_SRC
-
-   #+RESULTS:
-   : t
-
+   
 ** GPG
    Enable prompting for GPG pins.
-   #+BEGIN_SRC emacs-lisp :tangle yes
+   #+BEGIN_SRC emacs-lisp 
      (setq epa-pinentry-mode 'loopback)
    #+END_SRC
 
+** Comint
+   When we are in comint mode, let's bind some quick movement helpers
+   #+BEGIN_SRC emacs-lisp
+     (general-motion-definer
+      'comint-mode-hook
+      "j" 'comint-next-input
+      "k" 'comint-previous-input)
+   #+END_SRC
+
+** IElm
+   Let's give =ielm= a nice shortcut
+   #+BEGIN_SRC emacs-lisp
+     (general-global-open
+       "i" '(ielm :wk "ielm"))
+   #+END_SRC
+
 * Languages
-  This section covers language specific configuration.
 ** Agda
    First, we need to load the =agda-input= package.
    This provides an input method for writing agda code.
-   #+BEGIN_SRC emacs-lisp :tangle yes
+   #+BEGIN_SRC emacs-lisp 
      (use-package agda-input
        :straight (agda-input :type git :host github :repo "agda/agda"
 			     :files ("src/data/emacs-mode/agda-input.el")))
    #+END_SRC
    
    Now, let's load up =agda2-mode= itself.
-   #+BEGIN_SRC emacs-lisp :tangle yes
+   #+BEGIN_SRC emacs-lisp 
      (use-package agda2-mode
        :straight (agda2-mode :type git :host github 
 			     :repo "agda/agda"
@@ -649,24 +788,52 @@ This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfile
        :config
        (add-to-list 'exec-path "~/.local/bin/"))
    #+END_SRC
+   
+   Next, lets add a file template for agda files.
+   #+BEGIN_SRC emacs-lisp
+     (create-file-template ".*.agda$" "cubical-agda-template" 'agda2-mode)
+   #+END_SRC
+   
+   Finally, let's set up the jump handler.
+   #+BEGIN_SRC emacs-lisp
+     (general-motion-definer
+      'agda2-mode-hook
+      "j" 'agda2-next-goal
+      "k" 'agda2-previous-goal
+      "d" 'agda2-goto-definition-keyboard)
+   #+END_SRC
+
+*** Theme
+    =doom-one= looks pretty horrible with agda code, so let's try to fix that a bit.
+    #+BEGIN_SRC emacs-lisp
+      (set-face-attribute 'agda2-highlight-error-face nil
+			  :inherit 'error)
+    #+END_SRC
 
 ** CSS
-   #+BEGIN_SRC emacs-lisp :tangle yes
+   #+BEGIN_SRC emacs-lisp 
      (add-hook 'less-css-mode-hook #'lsp)
      (add-hook 'css-mode-hook #'lsp)
      (setq css-indent-offset 2)
    #+END_SRC
-** Emacs Lisp
-   Let's enable =flymake-mode= when editing elisp code.
-   #+BEGIN_SRC emacs-lisp :tangle yes
+** Lisp
+   Next, let's enable =lispy= for editing emacs lisp code.
+   #+BEGIN_SRC emacs-lisp 
      (use-package lispy
-       :straight t)
-     (add-hook 'emacs-lisp-mode-hook 'flymake-mode)
-     (add-hook 'emacs-lisp-mode-hook 'lispy-mode)
+       :straight t
+       :config
+       (setq lispy-colon-p nil))
+   #+END_SRC
+*** Emacs Lisp
+   Let's enable =flymake-mode= when editing elisp code.
+   #+BEGIN_SRC emacs-lisp
+     (general-add-hook 'emacs-lisp-mode-hook
+		       '(flymake-mode
+			 lispy-mode))
    #+END_SRC
 ** F#
    We use [[https://github.com/fsharp/emacs-fsharp-mode][fsharp-mode]] to provide font locking and indentation for F#.
-   #+BEGIN_SRC emacs-lisp :tangle yes
+   #+BEGIN_SRC emacs-lisp 
      (use-package fsharp-mode
        :straight t
        :config
@@ -676,12 +843,12 @@ This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfile
    #+END_SRC
    
    Next, let's load up the F# language server from =lsp-mode=
-   #+BEGIN_SRC emacs-lisp :tangle yes
+   #+BEGIN_SRC emacs-lisp 
      (require 'lsp-fsharp)
    #+END_SRC
    
    Finally, let's make sure that the =dotnet= executable is available on our path.
-   #+BEGIN_SRC emacs-lisp :tangle yes
+   #+BEGIN_SRC emacs-lisp 
      (add-to-path "/usr/local/share/dotnet/")
    #+END_SRC
 ** Typescript
@@ -691,7 +858,7 @@ This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfile
    We are going to need to install [[http://web-mode.org/][web-mode]] for =tsx= support.
    Emacs 27 did add =jsx= support, but the indentation behaves rather oddly
    when dealing with type annotations.
-   #+BEGIN_SRC emacs-lisp :tangle yes
+   #+BEGIN_SRC emacs-lisp 
      (use-package web-mode
        :straight t
        :custom
@@ -700,11 +867,13 @@ This is my emacs config, inspired by [[https://github.com/jamiecollinson/dotfile
    #+END_SRC
    
    Next, let's load the typescript language server.
-   #+BEGIN_SRC emacs-lisp :tangle yes
-     (add-to-list 'auto-mode-alist '("\\.tsx\\'" . web-mode))
+   #+BEGIN_SRC emacs-lisp 
+     (add-to-list 'auto-mode-alist '("\\.ts[x]?\\'" . web-mode))
      (add-hook 'web-mode-hook
 	       (lambda ()
-		 (when (string= web-mode-content-type "jsx")
+		 (when (or (string= web-mode-content-type "jsx")
+			   (string= web-mode-content-type "javascript"))
 		   (lsp))))
    #+END_SRC
 
+   

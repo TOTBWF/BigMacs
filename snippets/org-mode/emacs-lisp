@@ -3,6 +3,6 @@
 # key: <E
 # --
 
-#+BEGIN_SRC emacs-lisp :tangle yes
+#+BEGIN_SRC emacs-lisp
 $0
 #+END_SRC

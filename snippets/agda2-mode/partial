@@ -1,0 +1,5 @@
+# key: partial
+# name: partial
+# --
+λ { ($1 = i0) → ?
+$>  ; ($1 = i1) → ?}
