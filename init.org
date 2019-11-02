@@ -205,7 +205,8 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
       (setq evil-collection-mode-list nil)
       (evil-collection-init 'xref)
       (evil-collection-init 'dired)
-      (evil-collection-init 'flymake))
+      (evil-collection-init 'flymake)
+      (evil-collection-init 'compile))
   #+END_SRC
 *** Keybinding
   To begin, let's use =general.el= to create a base "definer".
@@ -608,7 +609,8 @@ mode, with approximately 50 million keybindings.
      (evil-define-key 'normal 'global
        "((" 'sp-wrap-round
        "([" 'sp-wrap-square
-       "({" 'sp-wrap-curly)
+       "({" 'sp-wrap-curly
+       "(u" 'sp-unwrap-sexp)
    #+END_SRC
 
 ** Rainbow Parens
@@ -649,7 +651,8 @@ mode, with approximately 50 million keybindings.
       :init
       (general-motion-definer
        'lsp-mode-hook
-       "d" 'lsp-find-definition))
+       "d" 'lsp-find-definition
+       "D" 'xref-pop-marker-stack))
   #+END_SRC
 
   Next, let's add [[https://github.com/tigersoldier/company-lsp][company-lsp]] for autocompletion support.
@@ -659,10 +662,6 @@ mode, with approximately 50 million keybindings.
       :commands company-lsp)
   #+END_SRC
   
-  Next, let's redefine =g d= when =lsp-mode= is active.
-  #+BEGIN_SRC emacs-lisp
-
-  #+END_SRC
 
   
   Once that's installed, we have to register it as a company backend.
@@ -760,12 +759,22 @@ mode, with approximately 50 million keybindings.
       "j" 'comint-next-input
       "k" 'comint-previous-input)
    #+END_SRC
+   
+   Let's also bind some keys to make comint history searching less of a pain.
+   #+BEGIN_SRC emacs-lisp
+   #+END_SRC
 
 ** IElm
    Let's give =ielm= a nice shortcut
    #+BEGIN_SRC emacs-lisp
-     (general-global-open
+     (general-global-menu-definer "open" "o"
        "i" '(ielm :wk "ielm"))
+   #+END_SRC
+
+** EShell
+   #+BEGIN_SRC emacs-lisp
+     (general-global-menu-definer "open" "o"
+       "e" '(eshell :wk "eshell"))
    #+END_SRC
 
 * Languages
@@ -875,5 +884,13 @@ mode, with approximately 50 million keybindings.
 			   (string= web-mode-content-type "javascript"))
 		   (lsp))))
    #+END_SRC
+   
+   Next, let's add =npm-mode=.
+   #+BEGIN_SRC emacs-lisp
+   (use-package npm-mode
+     :straight t)
+   #+END_SRC
+
+
 
    

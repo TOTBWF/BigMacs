@@ -1,0 +1,5 @@
+# key: fc
+# name: function-component
+# --
+interface $1Props {}
+const $1: FC<$1Props> = ({}: $1Props) => ()
