@@ -82,6 +82,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
   #+BEGIN_SRC emacs-lisp 
   (tool-bar-mode -1)
   (scroll-bar-mode -1) 
+  (menu-bar-mode -1) 
   #+END_SRC
 
   The error bell is really obnoxious, so let's just turn it off.
@@ -153,13 +154,6 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
       :config
       (load-theme 'doom-one t))
   #+END_SRC
-  
-  #+BEGIN_SRC emacs-lisp
-    (use-package wilmersdorf-theme
-      :straight (wilmersdorf :type git :host github :repo "ianpan870102/wilmersdorf-emacs-theme"
-			     :files ("wilmersdorf-theme.el")))
-  #+END_SRC
-
 * Interface
 ** Which Key
   First, let's add [[https://github.com/justbur/emacs-which-key][which-key]].
@@ -215,7 +209,8 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
       (evil-collection-init 'xref)
       (evil-collection-init 'dired)
       (evil-collection-init 'flymake)
-      (evil-collection-init 'compile))
+      (evil-collection-init 'compile)
+      (evil-collection-init 'sly))
   #+END_SRC
 *** Keybinding
   To begin, let's use =general.el= to create a base "definer".
@@ -330,6 +325,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
    #+BEGIN_SRC emacs-lisp
      (display-time-mode 1)
      (display-battery-mode 1)
+     (column-number-mode 1)
    #+END_SRC
 ** Help
   First, let's bind some of the =describe= functions
@@ -412,6 +408,12 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
        saved-tabs)
    #+END_SRC
    
+  Don't show the tab bar.
+  #+BEGIN_SRC emacs-lisp
+    (setq tab-bar-show nil)
+  #+END_SRC
+
+   
    Let's bind some keys!
    #+BEGIN_SRC emacs-lisp
      (general-global-menu-definer "tab" "t"
@@ -430,7 +432,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
    #+BEGIN_SRC emacs-lisp
      (global-definer
        "g t" '(tab-next     :wk "next tab")
-       "g T" '(tab-previous :wk "next tab"))
+       "g T" '(tab-previous :wk "previous tab"))
    #+END_SRC
 ** Toggles
    Sometimes it's useful to be able to toggle on and off some features
@@ -441,7 +443,6 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
   #+BEGIN_SRC emacs-lisp
     (add-hook 'org-mode-hook 'auto-fill-mode)
   #+END_SRC
-
 ** Keybindings
    =org-mode= is a monster of a
 mode, with approximately 50 million keybindings.
@@ -468,8 +469,6 @@ mode, with approximately 50 million keybindings.
    #+BEGIN_SRC emacs-lisp 
      (use-package org-jira
        :straight t
-       :hook (org-mode . org-jira-mode)
-       :commands (counsel-jira-find-file)
        :config
        (setq jiralib-url "https://bazinga.atlassian.net")
        (setq org-jira-use-status-as-todo t)
@@ -647,6 +646,14 @@ mode, with approximately 50 million keybindings.
      (add-hook 'prog-mode-hook 'rainbow-delimiters-mode)
    #+END_SRC
 
+** Whitespace
+   Let's make sure to highlight tabs.
+   #+BEGIN_SRC emacs-lisp
+     (use-package highlight-chars
+       :straight t
+       :config
+       (add-hook 'prog-mode-hook 'hc-highlight-tabs))
+   #+END_SRC
 ** XRef
    Let's make the xref buffer a little less intrusive.
    #+BEGIN_SRC emacs-lisp
@@ -800,6 +807,13 @@ mode, with approximately 50 million keybindings.
        "e" '(eshell :wk "eshell"))
    #+END_SRC
 
+   Next, let's create a function that toggles auto scrolling.
+   #+BEGIN_SRC emacs-lisp
+     (defun eshell-toggle-auto-scroll ()
+       (interactive)
+       (setq eshell-scroll-to-bottom-on-input (not eshell-scroll-to-bottom-on-input)))
+   #+END_SRC
+
 ** IRC
    For our IRC client, we are going to use =erc=.
    This is because it is one of the few emacs irc clients to use
@@ -881,12 +895,21 @@ mode, with approximately 50 million keybindings.
     #+BEGIN_SRC emacs-lisp
       (use-package geiser
         :straight t
-	:mode "\\.ss\\"
 	:gfhook
 	'lispy-mode
 	:config
 	(setq geiser-chez-binary "chez"))
     #+END_SRC
+*** Common Lisp
+    Let's try out =sly=.
+    #+BEGIN_SRC emacs-lisp
+      (use-package sly
+	:straight t
+	:config
+	(setq inferior-lisp-program "/usr/bin/sbcl")
+	:gfhook 'lispy-mode)
+    #+END_SRC
+
 ** Typescript
    Typescript is a bit of a pain to get working, mostly due to
    the evils of JSX.
@@ -918,9 +941,6 @@ mode, with approximately 50 million keybindings.
      :straight t)
    #+END_SRC
 
-
-
-   
 * Private Configuration
   If you want to have personal configurations
   (irc servers, etc), you can create a file called
@@ -928,7 +948,5 @@ mode, with approximately 50 million keybindings.
   and tangle the file (if it exists).
   #+BEGIN_SRC emacs-lisp
     (when (file-exists-p "~/.emacs.d/private.org")
-      (org-babel-tangle "~/.emacs.d/private.org"
-			"~/.emacs.d/private.el")
       (load "~/.emacs.d/private.el"))
   #+END_SRC
