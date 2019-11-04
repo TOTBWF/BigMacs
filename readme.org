@@ -766,7 +766,7 @@ mode, with approximately 50 million keybindings.
 ** GraphiQL
    #+BEGIN_SRC emacs-lisp
 	  (use-package graphiql
-	    :straight (graphiql :type git :host github :repo "OTBWF/graphiql.el")
+	    :straight (graphiql :type git :host github :repo "TOTBWF/graphiql.el")
 	    :config
 	    (setq graphiql-use-lsp t)
 	    (general-motion-definer
