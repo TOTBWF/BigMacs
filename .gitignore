@@ -9,3 +9,6 @@ recentf
 straight
 transient
 eshell
+
+private.*
+readme.el

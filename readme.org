@@ -54,6 +54,15 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
                (message "gc-cons-threshold restored to %S"
                         gc-cons-threshold)))
    #+END_SRC
+** Figuring out errors
+   Let's install [[https://github.com/Malabarba/elisp-bug-hunter][bug-hunter]] so that we
+   can bisect our config and track down annoying
+   behavior.
+   #+BEGIN_SRC emacs-lisp
+     (use-package bug-hunter
+       :straight t)
+   #+END_SRC
+
 ** Binding Keys
    Let's use [[https://github.com/noctuid/general.el][general.el]] to bind our keys in a more consistent way.
    #+BEGIN_SRC emacs-lisp  :results silent
@@ -215,6 +224,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
   other keybindings.
   #+BEGIN_SRC emacs-lisp 
     (general-create-definer global-definer
+      :keymaps 'override
       :states '(insert emacs normal hybrid motion visual operator)
       :prefix "SPC"
       :non-normal-prefix "C-SPC")
@@ -226,17 +236,18 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
     (defmacro general-global-menu-definer (def infix-key &rest body)
       "Create a definer named general-global-DEF wrapping global-definer.
     The prefix map is named 'my-DEF-map'."
-      (let ((definer-name (intern (concat "general-global-" def)))
-	    (unless (fboundp definer-name)
-		`(progn
-		   (general-create-definer ,definer-name
-		     :wrapping global-definer
-		     :prefix-map (quote ,(intern (concat "my-" def "-map")))
-		     :infix ,infix-key
-		     :wk-full-keys nil
-		     "" '(:ignore t :which-key ,def))
-		   (,definer-name
-		    ,@body))))))
+      (let ((definer-name (intern (concat "general-global-" def))))
+	(if (fboundp definer-name)
+	    `(,definer-name ,@body)
+	  `(progn
+	     (general-create-definer ,definer-name
+	       :wrapping global-definer
+	       :prefix-map (quote ,(intern (concat "my-" def "-map")))
+	       :infix ,infix-key
+	       :wk-full-keys nil
+	       "" '(:ignore t :which-key ,def))
+	     (,definer-name
+	       ,@body)))))
   #+END_SRC
   
   Now, let's also make a quick helper for adding mode-specific motions.
@@ -354,7 +365,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
   #+BEGIN_SRC emacs-lisp 
     (defun open-config-file ()
       (interactive)
-      (find-file "~/.emacs.d/init.org"))
+      (find-file "~/.emacs.d/readme.org"))
 
     (defun open-straight-repo ()
       (interactive)
@@ -400,8 +411,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
        (let ((saved-tabs (read (get-file-buffer (expand-file-name "tabs" user-emacs-directory))))))
        saved-tabs)
    #+END_SRC
-
-
+   
    Let's bind some keys!
    #+BEGIN_SRC emacs-lisp
      (general-global-menu-definer "tab" "t"
@@ -410,6 +420,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
        "n" '(tab-new                    :wk "new")
        "d" '(tab-close                  :wk "close")
        "r" '(tab-bar-rename-tab         :wk "rename")
+       "R" '(tab-bar-rename-tab-by-name :wk "rename other tab")
        "b" '(switch-to-buffer-other-tab :wk "open buffer in tab")
        "f" '(find-file-other-tab        :wk "open file in tab")
        "t" '(counsel-switch-tab         :wk "switch tab"))
@@ -425,6 +436,12 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
    Sometimes it's useful to be able to toggle on and off some features
    at will.
 * Org
+  I like to have my lines wrapped when writing org files,
+  so let's turn on =auto-fill-mode=.
+  #+BEGIN_SRC emacs-lisp
+    (add-hook 'org-mode-hook 'auto-fill-mode)
+  #+END_SRC
+
 ** Keybindings
    =org-mode= is a monster of a
 mode, with approximately 50 million keybindings.
@@ -434,6 +451,12 @@ mode, with approximately 50 million keybindings.
    so let's turn it off.
    #+BEGIN_SRC emacs-lisp 
      (setq org-confirm-babel-evaluate nil)
+   #+END_SRC
+** Export
+   For exporting to html, we are going to need =htmlize=
+   #+BEGIN_SRC emacs-lisp
+     (use-package htmlize
+       :straight t)
    #+END_SRC
 ** Writing
    #+BEGIN_SRC emacs-lisp
@@ -777,6 +800,15 @@ mode, with approximately 50 million keybindings.
        "e" '(eshell :wk "eshell"))
    #+END_SRC
 
+** IRC
+   For our IRC client, we are going to use =erc=.
+   This is because it is one of the few emacs irc clients to use
+   =auth-source=
+   
+   First, let's disable password prompts.
+   #+BEGIN_SRC emacs-lisp
+     (setq erc-prompt-for-password nil)
+   #+END_SRC
 * Languages
 ** Agda
    First, we need to load the =agda-input= package.
@@ -795,7 +827,7 @@ mode, with approximately 50 million keybindings.
 			     :files ("src/data/emacs-mode/*.el"
 				     (:exclude "agda-input.el")))
        :config
-       (add-to-list 'exec-path "~/.local/bin/"))
+       (add-to-path "~/.local/bin/"))
    #+END_SRC
    
    Next, lets add a file template for agda files.
@@ -817,6 +849,10 @@ mode, with approximately 50 million keybindings.
     #+BEGIN_SRC emacs-lisp
       (set-face-attribute 'agda2-highlight-error-face nil
 			  :inherit 'error)
+      (set-face-attribute 'agda2-highlight-unsolved-constraint-face nil
+                          :inherit 'default
+			  :foreground "#e6bdef"
+			  :background "#261230")
     #+END_SRC
 
 ** CSS
@@ -840,26 +876,17 @@ mode, with approximately 50 million keybindings.
 		       '(flymake-mode
 			 lispy-mode))
    #+END_SRC
-** F#
-   We use [[https://github.com/fsharp/emacs-fsharp-mode][fsharp-mode]] to provide font locking and indentation for F#.
-   #+BEGIN_SRC emacs-lisp 
-     (use-package fsharp-mode
-       :straight t
-       :config
-       (add-hook 'fsharp-mode-hook 'lsp)
-       :custom
-       (fsharp-ac-intellisense-enabled nil))
-   #+END_SRC
-   
-   Next, let's load up the F# language server from =lsp-mode=
-   #+BEGIN_SRC emacs-lisp 
-     (require 'lsp-fsharp)
-   #+END_SRC
-   
-   Finally, let's make sure that the =dotnet= executable is available on our path.
-   #+BEGIN_SRC emacs-lisp 
-     (add-to-path "/usr/local/share/dotnet/")
-   #+END_SRC
+*** Scheme
+    For scheme, we are going to use [[http://www.nongnu.org/geiser/][geiser]].
+    #+BEGIN_SRC emacs-lisp
+      (use-package geiser
+        :straight t
+	:mode "\\.ss\\"
+	:gfhook
+	'lispy-mode
+	:config
+	(setq geiser-chez-binary "chez"))
+    #+END_SRC
 ** Typescript
    Typescript is a bit of a pain to get working, mostly due to
    the evils of JSX.
@@ -894,3 +921,14 @@ mode, with approximately 50 million keybindings.
 
 
    
+* Private Configuration
+  If you want to have personal configurations
+  (irc servers, etc), you can create a file called
+  =private.org= and place them there. Let's load
+  and tangle the file (if it exists).
+  #+BEGIN_SRC emacs-lisp
+    (when (file-exists-p "~/.emacs.d/private.org")
+      (org-babel-tangle "~/.emacs.d/private.org"
+			"~/.emacs.d/private.el")
+      (load "~/.emacs.d/private.el"))
+  #+END_SRC
