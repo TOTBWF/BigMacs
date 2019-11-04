@@ -9,7 +9,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
 * Setup
 ** Package Management
     First, let's load up some basic bootstrap code for [[https://github.com/raxod502/straight.el][straight.el.]]
-    #+BEGIN_SRC emacs-lisp 
+    #+BEGIN_SRC emacs-lisp
     (defvar bootstrap-version)
 	(let ((bootstrap-file
 	    (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
@@ -19,19 +19,19 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
 		(url-retrieve-synchronously
 		"https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
 		'silent 'inhibit-cookies)
-  	    (goto-char (point-max))
+	    (goto-char (point-max))
 	    (eval-print-last-sexp)))
 	(load bootstrap-file nil 'nomessage))
     #+END_SRC
 
     Now, let's load up [[https://github.com/jwiegley/use-package][use-package]].
-    #+BEGIN_SRC emacs-lisp 
+    #+BEGIN_SRC emacs-lisp
     (straight-use-package 'use-package)
     #+END_SRC
 ** Benchmark Setup
-   [[https://github.com/dholm/benchmark-init-el][benchmark-init]] records startup time by package so we can debug. 
+   [[https://github.com/dholm/benchmark-init-el][benchmark-init]] records startup time by package so we can debug.
    It only records things after it's initialised, so put as early in config as possible.
-   #+BEGIN_SRC emacs-lisp 
+   #+BEGIN_SRC emacs-lisp
    (use-package benchmark-init
      :straight t
      :config
@@ -42,17 +42,17 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
 	     (lambda () (message "loaded in %s" (emacs-init-time))))
    #+END_SRC
 ** Avoid GC during initialization.
-   By default, the GC threshold for emacs is 800kb, so let's bump this up to 
+   By default, the GC threshold for emacs is 800kb, so let's bump this up to
    10MB to avoid GC when initializing.
-   #+BEGIN_SRC emacs-lisp 
+   #+BEGIN_SRC emacs-lisp
    (setq gc-cons-threshold 10000000)
 
    ;; Restore after startup
    (add-hook 'after-init-hook
-             (lambda ()
-               (setq gc-cons-threshold 1000000)
-               (message "gc-cons-threshold restored to %S"
-                        gc-cons-threshold)))
+	     (lambda ()
+	       (setq gc-cons-threshold 1000000)
+	       (message "gc-cons-threshold restored to %S"
+			gc-cons-threshold)))
    #+END_SRC
 ** Figuring out errors
    Let's install [[https://github.com/Malabarba/elisp-bug-hunter][bug-hunter]] so that we
@@ -74,24 +74,24 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
    #+END_SRC
 * Preferences
   Don't show the help screen on startup.
-  #+BEGIN_SRC emacs-lisp 
+  #+BEGIN_SRC emacs-lisp
   (setq inhibit-startup-screen t)
   #+END_SRC
 
   Let's disable some un-needed window decorations.
-  #+BEGIN_SRC emacs-lisp 
+  #+BEGIN_SRC emacs-lisp
   (tool-bar-mode -1)
-  (scroll-bar-mode -1) 
-  (menu-bar-mode -1) 
+  (scroll-bar-mode -1)
+  (menu-bar-mode -1)
   #+END_SRC
 
   The error bell is really obnoxious, so let's just turn it off.
-  #+BEGIN_SRC emacs-lisp 
+  #+BEGIN_SRC emacs-lisp
   (setq ring-bell-function 'ignore)
   #+END_SRC
-  
+
   Don't fill the filesystem with garbage please.
-  #+BEGIN_SRC emacs-lisp 
+  #+BEGIN_SRC emacs-lisp
     (setq auto-save-file-name-transforms `((".*" ,temporary-file-directory t))
 	  backup-by-copying t
 	  backup-directory-alist '((".*" . "~/.emacs-tmp"))
@@ -100,51 +100,51 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
 	  kept-old-versions 2
 	  version-control t)
   #+END_SRC
-  
+
   Never, ever use tabs.
-  #+BEGIN_SRC emacs-lisp 
+  #+BEGIN_SRC emacs-lisp
     (setq indent-tabs-mode nil)
   #+END_SRC
-  
+
   Make 'yes or no' prompts shorter.
-  #+BEGIN_SRC emacs-lisp 
+  #+BEGIN_SRC emacs-lisp
     (defalias 'yes-or-no-p 'y-or-n-p)
   #+END_SRC
 
-  
+
   For whatever reason, adding things to ~exec-path~ can be a bit wonky, so let's define
   a helper for doing just that.
-  #+BEGIN_SRC emacs-lisp 
+  #+BEGIN_SRC emacs-lisp
     (defun add-to-path (path)
       (add-to-list 'exec-path path)
       (setenv "PATH" (concat path ":" (getenv "PATH"))))
   #+END_SRC
 
   A lot of our commands live inside of ~/usr/local/bin~, so let's load it up!
-  #+BEGIN_SRC emacs-lisp 
+  #+BEGIN_SRC emacs-lisp
     (add-to-path "/usr/local/bin/")
   #+END_SRC
-  
+
   Make sure to follow symlinks
-  #+BEGIN_SRC emacs-lisp 
+  #+BEGIN_SRC emacs-lisp
       (setq vc-follow-symlinks t)
   #+END_SRC
-  
+
   Highlight matching parens
-  #+BEGIN_SRC emacs-lisp 
+  #+BEGIN_SRC emacs-lisp
     (show-paren-mode)
   #+END_SRC
-  
+
   Highlight between point and selection start.
-  #+BEGIN_SRC emacs-lisp 
+  #+BEGIN_SRC emacs-lisp
     (transient-mark-mode)
   #+END_SRC
-  
+
   Fix scrolling
-  #+BEGIN_SRC emacs-lisp 
+  #+BEGIN_SRC emacs-lisp
   (setq scroll-conservatively 101
-        mouse-wheel-scroll-amount '(1)
-        mouse-wheel-progressive-speed nil)
+	mouse-wheel-scroll-amount '(1)
+	mouse-wheel-progressive-speed nil)
   #+END_SRC
 * Themes
   There are a few options here, as I haven't totally settled.
@@ -157,24 +157,24 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
 * Interface
 ** Which Key
   First, let's add [[https://github.com/justbur/emacs-which-key][which-key]].
-  #+BEGIN_SRC emacs-lisp 
+  #+BEGIN_SRC emacs-lisp
   (use-package which-key
     :straight t)
   (which-key-mode)
   #+END_SRC
 
   To enable custom prefix names, we need to set =which-key-enable-extended-define-key=.
-  #+BEGIN_SRC emacs-lisp 
+  #+BEGIN_SRC emacs-lisp
   (setq which-key-enable-extended-define-key t)
   #+END_SRC
-  
+
   Finally, lets enable =which-key-mode=.
-  #+BEGIN_SRC emacs-lisp 
+  #+BEGIN_SRC emacs-lisp
     (which-key-mode 1)
   #+END_SRC
 ** Evil
   [[https://github.com/emacs-evil/evil][evil]] provides us with vim-like keybindings inside of emacs.
-  
+
   First, let's load up evil. Make note of the section that
   binds =leader-map= to =SPC=.
   #+BEGIN_SRC emacs-lisp  :results silent
@@ -191,14 +191,14 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
   #+END_SRC
 
 
-  Next, let's install [[https://github.com/linktohack/evil-commentary][evil-commentary]], which lets us easily comment out code. 
-  #+BEGIN_SRC emacs-lisp 
+  Next, let's install [[https://github.com/linktohack/evil-commentary][evil-commentary]], which lets us easily comment out code.
+  #+BEGIN_SRC emacs-lisp
     (use-package evil-commentary
       :straight t
       :config
       (evil-commentary-mode))
   #+END_SRC
-  
+
   Finally, let's install [[https://github.com/emacs-evil/evil-collection][evil-collection]].
   #+BEGIN_SRC emacs-lisp
     (use-package evil-collection
@@ -217,14 +217,14 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
   This starts everything with a =SPC= prefix, and sticks
   it in the =general-override-mode-map= map, which overrides
   other keybindings.
-  #+BEGIN_SRC emacs-lisp 
+  #+BEGIN_SRC emacs-lisp
     (general-create-definer global-definer
       :keymaps 'override
       :states '(insert emacs normal hybrid motion visual operator)
       :prefix "SPC"
       :non-normal-prefix "C-SPC")
   #+END_SRC
-  
+
   Next, let's create a macro that makes definers for each nested prefix maps.
   This lets us re-use each defininer, and prevent clobbering of definitions.
   #+BEGIN_SRC emacs-lisp
@@ -244,7 +244,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
 	     (,definer-name
 	       ,@body)))))
   #+END_SRC
-  
+
   Now, let's also make a quick helper for adding mode-specific motions.
   #+BEGIN_SRC emacs-lisp
     (defmacro general-motion-definer (mode &rest body)
@@ -262,10 +262,10 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
 
   By default =ivy= starts every regex with ~^~. I find this annoying,
   so let's just set it to an empty string.
-  
+
   Also, the default =evil= search is nowhere as good as swiper, so
   let's replace it all together.
-  #+BEGIN_SRC emacs-lisp 
+  #+BEGIN_SRC emacs-lisp
     (use-package ivy
       :straight t
       :init
@@ -279,7 +279,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
 
       (general-mmap "/" 'swiper))
   #+END_SRC
-  
+
   Next, let's load up =counsel=.
   #+BEGIN_SRC emacs-lisp
     (use-package counsel
@@ -291,7 +291,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
       ("M-x" 'counsel-M-x)
       (global-definer "SPC" '(counsel-M-x :wk "M-x")))
   #+END_SRC
-  
+
   Finally, let's load =hydra= and friends.
   #+BEGIN_SRC emacs-lisp
     (use-package hydra
@@ -320,7 +320,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
        (diminish 'eldoc-mode)
        (add-hook 'undo-tree-mode-hook (lambda () (diminish 'undo-tree-mode))))
    #+END_SRC
-   
+
    Next, let's add some helpful indicators.
    #+BEGIN_SRC emacs-lisp
      (display-time-mode 1)
@@ -342,7 +342,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
   #+END_SRC
 ** Buffers
   Let's bind buffer management to some nicer keys.
-  #+BEGIN_SRC emacs-lisp 
+  #+BEGIN_SRC emacs-lisp
     (defun open-scratch-buffer ()
       (interactive)
       (display-buffer (get-buffer-create "*scratch*")))
@@ -358,7 +358,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
   #+END_SRC
 ** Files
   Some handy bindings for opening files.
-  #+BEGIN_SRC emacs-lisp 
+  #+BEGIN_SRC emacs-lisp
     (defun open-config-file ()
       (interactive)
       (find-file "~/.emacs.d/readme.org"))
@@ -378,7 +378,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
   #+END_SRC
 ** Windows
   Let's bind window management to some nicer keys
-  #+BEGIN_SRC emacs-lisp 
+  #+BEGIN_SRC emacs-lisp
     (general-global-menu-definer "window" "w"
      "h" '(evil-window-left   :wk "left")
      "j" '(evil-window-down   :wk "down")
@@ -390,7 +390,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
   #+END_SRC
 ** Tabs
    Let's use emacs 27 recently added tab support to emulate workspaces.
-   
+
    First, let's define a nice ivy interface for selecting which tab to switch to.
    #+BEGIN_SRC emacs-lisp
      (defun counsel-switch-tab ()
@@ -400,20 +400,20 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
 		 :action 'tab-bar-switch-to-tab
 		 :caller 'counsel-switch-tab))
    #+END_SRC
-   
+
    Let's also define a nice way to dump and load tab configurations.
    #+BEGIN_SRC emacs-lisp
      (defun save-tab ()
        (let ((saved-tabs (read (get-file-buffer (expand-file-name "tabs" user-emacs-directory))))))
        saved-tabs)
    #+END_SRC
-   
+
   Don't show the tab bar.
   #+BEGIN_SRC emacs-lisp
     (setq tab-bar-show nil)
   #+END_SRC
 
-   
+
    Let's bind some keys!
    #+BEGIN_SRC emacs-lisp
      (general-global-menu-definer "tab" "t"
@@ -427,7 +427,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
        "f" '(find-file-other-tab        :wk "open file in tab")
        "t" '(counsel-switch-tab         :wk "switch tab"))
    #+END_SRC
-   
+
    Let's also bind some quick extra conveinent bindings.
    #+BEGIN_SRC emacs-lisp
      (global-definer
@@ -450,7 +450,7 @@ mode, with approximately 50 million keybindings.
 ** Babel
    It's a bit annoying that =org-babel= asks for confirmation all the time,
    so let's turn it off.
-   #+BEGIN_SRC emacs-lisp 
+   #+BEGIN_SRC emacs-lisp
      (setq org-confirm-babel-evaluate nil)
    #+END_SRC
 ** Export
@@ -466,7 +466,7 @@ mode, with approximately 50 million keybindings.
    #+END_SRC
 ** Jira
    Let's enable [[https://github.com/ahungry/org-jira][org-jira]].
-   #+BEGIN_SRC emacs-lisp 
+   #+BEGIN_SRC emacs-lisp
      (use-package org-jira
        :straight t
        :config
@@ -482,14 +482,14 @@ mode, with approximately 50 million keybindings.
 					 "DONE(d)"
 					 "REMOVED(R)")))
    #+END_SRC
-   
+
    Now, let's define a helper function for opening up the jira directory.
    #+BEGIN_SRC emacs-lisp
      (defun counsel-find-jira-file ()
        (interactive)
        (counsel-find-file org-jira-working-dir))
    #+END_SRC
-   
+
    Finally, let's bind that helper function to a key
    #+BEGIN_SRC emacs-lisp
        (general-global-menu-definer "file" "f"
@@ -499,32 +499,32 @@ mode, with approximately 50 million keybindings.
 ** Projectile
   [[https://github.com/bbatsov/projectile][projectile]] is a project system for emacs, which lets find navigate
   our projects much faster.
-  #+BEGIN_SRC emacs-lisp 
+  #+BEGIN_SRC emacs-lisp
     (use-package projectile
       :straight t)
   #+END_SRC
-  
+
   To integrate =projectile= into our =ivy= based workflow, we are going to use
   [[https://github.com/ericdanan/counsel-projectile][counsel-projectile]].
-  #+BEGIN_SRC emacs-lisp 
+  #+BEGIN_SRC emacs-lisp
     (use-package counsel-projectile
       :straight t)
   #+END_SRC
-  
+
   Finally, let's enable =projectile-mode= globally, and bind the keymap.
-  #+BEGIN_SRC emacs-lisp 
+  #+BEGIN_SRC emacs-lisp
     (projectile-mode 1)
     (counsel-projectile-mode 1)
   #+END_SRC
-  
+
   Next, let's bind some keys!
-  #+BEGIN_SRC emacs-lisp 
+  #+BEGIN_SRC emacs-lisp
     (global-definer
       "p"   '(:keymap projectile-command-map :package projectile :wk "project"))
   #+END_SRC
 ** Autocompletion
   For autocompletion, we are going to use [[https://github.com/company-mode/company-mode][company-mode]].
-  #+BEGIN_SRC emacs-lisp 
+  #+BEGIN_SRC emacs-lisp
     (use-package company
       :straight t
       :config
@@ -532,25 +532,25 @@ mode, with approximately 50 million keybindings.
 	    company-idle-delay 0.3
 	    company-echo-delay 0))
   #+END_SRC
-  
+
   For now, let's enable it globally.
-  #+BEGIN_SRC emacs-lisp 
+  #+BEGIN_SRC emacs-lisp
     (global-company-mode)
   #+END_SRC
 
   Start autocompletion when you press tab.
-  #+BEGIN_SRC emacs-lisp 
+  #+BEGIN_SRC emacs-lisp
     (define-key company-mode-map (kbd "TAB") #'company-indent-or-complete-common)
   #+END_SRC
 ** Snippets
    We use [[https://github.com/joaotavora/yasnippet][yasnippet]] for all of our snippeting needs.
-   #+BEGIN_SRC emacs-lisp 
+   #+BEGIN_SRC emacs-lisp
      (use-package yasnippet
        :straight t)
    #+END_SRC
-   
+
    The default yas bindings are pretty hard to use, so let's rebind them.
-   #+BEGIN_SRC emacs-lisp 
+   #+BEGIN_SRC emacs-lisp
      (general-global-menu-definer "snippet" "s"
       "n" '(yas-new-snippet        :wk "new")
       "i" '(yas-insert-snippet     :wk "insert")
@@ -558,7 +558,7 @@ mode, with approximately 50 million keybindings.
    #+END_SRC
 
    Lets enable =yasnippet= globally.
-   #+BEGIN_SRC emacs-lisp 
+   #+BEGIN_SRC emacs-lisp
      (yas-global-mode 1)
    #+END_SRC
 ** AutoInsert
@@ -572,7 +572,7 @@ mode, with approximately 50 million keybindings.
    #+BEGIN_SRC emacs-lisp
      (use-package autoinsert
        :config
-       (setq auto-insert-query nil) 	       ;; Don't ask the user before inserting
+       (setq auto-insert-query nil)	       ;; Don't ask the user before inserting
        (auto-insert-mode 1)
        (add-hook 'find-file-hook 'auto-insert) ;; After a file is opened, insert.
        (setq auto-insert-alist nil))
@@ -580,18 +580,18 @@ mode, with approximately 50 million keybindings.
 ** Flymake
    We use =flymake= to handle displaying errors inside of buffers.
    However, there a few tweaks required to get things working nicely OOTB.
-   
+
    For starters, =flymake= doesn't show errors in a posframe, so we need to install
    [[https://github.com/Ladicle/flymake-posframe][flymake-posframe]] for that.
-   #+BEGIN_SRC emacs-lisp 
+   #+BEGIN_SRC emacs-lisp
      (use-package flymake-posframe
        :straight (flymake-posframe :type git :host github
 				   :repo "Ladicle/flymake-posframe")
        :hook (flymake-mode . flymake-posframe-mode))
    #+END_SRC
-   
+
    Next, let's add some nice keybindings.
-   #+BEGIN_SRC emacs-lisp 
+   #+BEGIN_SRC emacs-lisp
      (general-global-menu-definer "error" "e")
 
      (general-global-error
@@ -599,11 +599,11 @@ mode, with approximately 50 million keybindings.
       "k" '(flymake-goto-prev-error :wk "previous error")
       "e" '(flymake-show-diagnostics-buffer :wk "display errors"))
    #+END_SRC
-   
+
    Now, the =flymake= diagnostic buffer will pop up somewhat randomly, so let's make sure it only
    ever pops up at the bottom.
-   
-   #+BEGIN_SRC emacs-lisp 
+
+   #+BEGIN_SRC emacs-lisp
      (add-to-list 'display-buffer-alist
 		  '("\\*Flymake diagnostics*"
 		    (display-buffer-below-selected display-buffer-at-bottom)
@@ -614,20 +614,20 @@ mode, with approximately 50 million keybindings.
 ** SmartParens
    [[https://github.com/Fuco1/smartparens][smartparens]] provides a bunch of utilities for handling
    pairs in emacs.
-   #+BEGIN_SRC emacs-lisp 
+   #+BEGIN_SRC emacs-lisp
      (use-package smartparens
        :straight t)
    #+END_SRC
-   
+
    By default, we turn on smartparens globally (but not strict mode).
    The default config is pretty good, so let's bring that in as well.
-   #+BEGIN_SRC emacs-lisp 
+   #+BEGIN_SRC emacs-lisp
      (require 'smartparens-config)
      (smartparens-global-mode)
    #+END_SRC
-   
+
    Here are some helpful keybinds.
-   #+BEGIN_SRC emacs-lisp 
+   #+BEGIN_SRC emacs-lisp
      (evil-define-key 'normal 'global
        "((" 'sp-wrap-round
        "([" 'sp-wrap-square
@@ -637,11 +637,11 @@ mode, with approximately 50 million keybindings.
 
 ** Rainbow Parens
    Turn on [[https://github.com/Fanael/rainbow-delimiters][rainbow-delimiters]].
-   #+BEGIN_SRC emacs-lisp 
+   #+BEGIN_SRC emacs-lisp
      (use-package rainbow-delimiters
        :straight t)
    #+END_SRC
-   
+
    #+BEGIN_SRC emacs-lisp
      (add-hook 'prog-mode-hook 'rainbow-delimiters-mode)
    #+END_SRC
@@ -663,7 +663,7 @@ mode, with approximately 50 million keybindings.
 		    (inhibit-same-window . t)
 		    (window-height . 10)))
    #+END_SRC
-   
+
    Next, let's add some nifty keybindings!
    #+BEGIN_SRC emacs-lisp
      (general-motion-definer
@@ -674,7 +674,7 @@ mode, with approximately 50 million keybindings.
 
 * LSP
   [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]] provides language services for quite a few languages.
-  #+BEGIN_SRC emacs-lisp 
+  #+BEGIN_SRC emacs-lisp
     (use-package lsp-mode
       :straight t
       :commands lsp
@@ -686,23 +686,23 @@ mode, with approximately 50 million keybindings.
   #+END_SRC
 
   Next, let's add [[https://github.com/tigersoldier/company-lsp][company-lsp]] for autocompletion support.
-  #+BEGIN_SRC emacs-lisp 
+  #+BEGIN_SRC emacs-lisp
     (use-package company-lsp
       :straight t
       :commands company-lsp)
   #+END_SRC
-  
 
-  
+
+
   Once that's installed, we have to register it as a company backend.
-  #+BEGIN_SRC emacs-lisp 
+  #+BEGIN_SRC emacs-lisp
     (require 'company-lsp)
     (push 'company-lsp company-backend)
   #+END_SRC
 
   Next, it's a bit of a pain having to manually set + unset ~lsp-log-io~, so
   let's write a little helper.
-  #+BEGIN_SRC emacs-lisp 
+  #+BEGIN_SRC emacs-lisp
     (defun lsp-toggle-log-io ()
 	"Toggle `lsp-log-io'"
 	(interactive)
@@ -716,18 +716,18 @@ mode, with approximately 50 million keybindings.
 * Tools
 ** Magit
    To start, let's install [[https://github.com/magit/magit][magit]].
-   #+BEGIN_SRC emacs-lisp 
+   #+BEGIN_SRC emacs-lisp
      (use-package magit
        :straight t)
    #+END_SRC
-   
+
    =magit= is a fantastic tool, but the keybindings don't quite line up with =evil=.
    Let's change that by using [[https://github.com/emacs-evil/evil-magit][evil-magit]].
-   #+BEGIN_SRC emacs-lisp 
+   #+BEGIN_SRC emacs-lisp
      (use-package evil-magit
        :straight t)
    #+END_SRC
-   
+
    Now, let's bind some keys!
    #+BEGIN_SRC emacs-lisp
      (general-global-menu-definer "git" "g")
@@ -737,7 +737,7 @@ mode, with approximately 50 million keybindings.
 ** Brew
    It's a pain having to switch to the terminal to use brew,
    so let's use [[https://github.com/TOTBWF/counsel-brew][counsel-brew]] instead.
-   #+BEGIN_SRC emacs-lisp 
+   #+BEGIN_SRC emacs-lisp
      (use-package counsel-brew
        :straight (counsel-brew :type git :host github
 			       :repo "TOTBWF/counsel-brew")
@@ -746,13 +746,13 @@ mode, with approximately 50 million keybindings.
 ** Docker
    I use =counsel-docker= to manage docker containers.
    As of right now, this is a WIP, so let's just bring this in from source.
-   #+BEGIN_SRC emacs-lisp 
+   #+BEGIN_SRC emacs-lisp
      (use-package counsel-docker
        :load-path "~/Documents/projects/counsel-docker")
    #+END_SRC
-   
+
    Next up, let's bind some keys.
-   #+BEGIN_SRC emacs-lisp 
+   #+BEGIN_SRC emacs-lisp
      (evil-define-key 'normal 'global
        (kbd "SPC d i") 'counsel-docker-image
        (kbd "SPC d c") 'counsel-docker-container)
@@ -764,7 +764,7 @@ mode, with approximately 50 million keybindings.
    #+END_SRC
 
 ** GraphiQL
-   #+BEGIN_SRC emacs-lisp 
+   #+BEGIN_SRC emacs-lisp
 	  (use-package graphiql
 	    :straight (graphiql :type git :host github :repo "OTBWF/graphiql.el")
 	    :config
@@ -774,10 +774,10 @@ mode, with approximately 50 million keybindings.
 	     "j" '(graphiql-next-query     :wk "next query")
 	     "k" '(graphiql-previous-query :wk "previous query")))
    #+END_SRC
-   
+
 ** GPG
    Enable prompting for GPG pins.
-   #+BEGIN_SRC emacs-lisp 
+   #+BEGIN_SRC emacs-lisp
      (setq epa-pinentry-mode 'loopback)
    #+END_SRC
 
@@ -789,7 +789,7 @@ mode, with approximately 50 million keybindings.
       "j" 'comint-next-input
       "k" 'comint-previous-input)
    #+END_SRC
-   
+
    Let's also bind some keys to make comint history searching less of a pain.
    #+BEGIN_SRC emacs-lisp
    #+END_SRC
@@ -818,7 +818,7 @@ mode, with approximately 50 million keybindings.
    For our IRC client, we are going to use =erc=.
    This is because it is one of the few emacs irc clients to use
    =auth-source=
-   
+
    First, let's disable password prompts.
    #+BEGIN_SRC emacs-lisp
      (setq erc-prompt-for-password nil)
@@ -827,28 +827,28 @@ mode, with approximately 50 million keybindings.
 ** Agda
    First, we need to load the =agda-input= package.
    This provides an input method for writing agda code.
-   #+BEGIN_SRC emacs-lisp 
+   #+BEGIN_SRC emacs-lisp
      (use-package agda-input
        :straight (agda-input :type git :host github :repo "agda/agda"
 			     :files ("src/data/emacs-mode/agda-input.el")))
    #+END_SRC
-   
+
    Now, let's load up =agda2-mode= itself.
-   #+BEGIN_SRC emacs-lisp 
+   #+BEGIN_SRC emacs-lisp
      (use-package agda2-mode
-       :straight (agda2-mode :type git :host github 
+       :straight (agda2-mode :type git :host github
 			     :repo "agda/agda"
 			     :files ("src/data/emacs-mode/*.el"
 				     (:exclude "agda-input.el")))
        :config
        (add-to-path "~/.local/bin/"))
    #+END_SRC
-   
+
    Next, lets add a file template for agda files.
    #+BEGIN_SRC emacs-lisp
      (create-file-template ".*.agda$" "cubical-agda-template" 'agda2-mode)
    #+END_SRC
-   
+
    Finally, let's set up the jump handler.
    #+BEGIN_SRC emacs-lisp
      (general-motion-definer
@@ -864,20 +864,40 @@ mode, with approximately 50 million keybindings.
       (set-face-attribute 'agda2-highlight-error-face nil
 			  :inherit 'error)
       (set-face-attribute 'agda2-highlight-unsolved-constraint-face nil
-                          :inherit 'default
+			  :inherit 'default
 			  :foreground "#e6bdef"
 			  :background "#261230")
     #+END_SRC
 
 ** CSS
-   #+BEGIN_SRC emacs-lisp 
+   #+BEGIN_SRC emacs-lisp
      (add-hook 'less-css-mode-hook #'lsp)
      (add-hook 'css-mode-hook #'lsp)
      (setq css-indent-offset 2)
    #+END_SRC
+** F#
+   We use [[https://github.com/fsharp/emacs-fsharp-mode][fsharp-mode]] to provide font locking and indentation for F#.
+   #+BEGIN_SRC emacs-lisp
+     (use-package fsharp-mode
+       :straight t
+       :config
+       (add-hook 'fsharp-mode-hook 'lsp)
+       :custom
+       (fsharp-ac-intellisense-enabled nil))
+   #+END_SRC
+
+   Next, let's load up the F# language server from =lsp-mode=
+   #+BEGIN_SRC emacs-lisp
+     (require 'lsp-fsharp)
+   #+END_SRC
+
+   Finally, let's make sure that the =dotnet= executable is available on our path.
+   #+BEGIN_SRC emacs-lisp
+     (add-to-path "/usr/local/share/dotnet/")
+   #+END_SRC
 ** Lisp
    Next, let's enable =lispy= for editing emacs lisp code.
-   #+BEGIN_SRC emacs-lisp 
+   #+BEGIN_SRC emacs-lisp
      (use-package lispy
        :straight t
        :config
@@ -894,7 +914,7 @@ mode, with approximately 50 million keybindings.
     For scheme, we are going to use [[http://www.nongnu.org/geiser/][geiser]].
     #+BEGIN_SRC emacs-lisp
       (use-package geiser
-        :straight t
+	:straight t
 	:gfhook
 	'lispy-mode
 	:config
@@ -913,20 +933,20 @@ mode, with approximately 50 million keybindings.
 ** Typescript
    Typescript is a bit of a pain to get working, mostly due to
    the evils of JSX.
-   
+
    We are going to need to install [[http://web-mode.org/][web-mode]] for =tsx= support.
    Emacs 27 did add =jsx= support, but the indentation behaves rather oddly
    when dealing with type annotations.
-   #+BEGIN_SRC emacs-lisp 
+   #+BEGIN_SRC emacs-lisp
      (use-package web-mode
        :straight t
        :custom
        (web-mode-code-indent-offset 2 "Set indentation of js code to 2")
        (web-mode-markup-indent-offset 2 "Set indentation of js code to 2"))
    #+END_SRC
-   
+
    Next, let's load the typescript language server.
-   #+BEGIN_SRC emacs-lisp 
+   #+BEGIN_SRC emacs-lisp
      (add-to-list 'auto-mode-alist '("\\.ts[x]?\\'" . web-mode))
      (add-hook 'web-mode-hook
 	       (lambda ()
@@ -934,7 +954,7 @@ mode, with approximately 50 million keybindings.
 			   (string= web-mode-content-type "javascript"))
 		   (lsp))))
    #+END_SRC
-   
+
    Next, let's add =npm-mode=.
    #+BEGIN_SRC emacs-lisp
    (use-package npm-mode
