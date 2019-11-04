@@ -224,6 +224,8 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
       :prefix "SPC"
       :non-normal-prefix "C-SPC")
   #+END_SRC
+  
+  <
 
   Next, let's create a macro that makes definers for each nested prefix maps.
   This lets us re-use each defininer, and prevent clobbering of definitions.
@@ -244,10 +246,19 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
 	     (,definer-name
 	       ,@body)))))
   #+END_SRC
+  
+  #+BEGIN_SRC emacs-lisp
+    (general-create-definer general-global-motion-definer
+      :keymaps 'override
+      :states '(normal motion visual operator)
+      :prefix "g")
+  #+END_SRC
+
+
 
   Now, let's also make a quick helper for adding mode-specific motions.
   #+BEGIN_SRC emacs-lisp
-    (defmacro general-motion-definer (mode &rest body)
+    (defmacro general-local-motion-definer (mode &rest body)
       `(general-add-hook ,mode
 			 (lambda ()
 			   (general-define-key
@@ -430,9 +441,9 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
 
    Let's also bind some quick extra conveinent bindings.
    #+BEGIN_SRC emacs-lisp
-     (global-definer
-       "g t" '(tab-next     :wk "next tab")
-       "g T" '(tab-previous :wk "previous tab"))
+     (general-global-motion-definer
+       "t" '(tab-next     :wk "next tab")
+       "T" '(tab-previous :wk "previous tab"))
    #+END_SRC
 ** Toggles
    Sometimes it's useful to be able to toggle on and off some features
@@ -666,7 +677,7 @@ mode, with approximately 50 million keybindings.
 
    Next, let's add some nifty keybindings!
    #+BEGIN_SRC emacs-lisp
-     (general-motion-definer
+     (general-local-motion-definer
       'xref--xref-buffer-mode-hook
       "k" 'xref-prev-line
       "j" 'xref-next-line)
@@ -679,7 +690,7 @@ mode, with approximately 50 million keybindings.
       :straight t
       :commands lsp
       :init
-      (general-motion-definer
+      (general-local-motion-definer
        'lsp-mode-hook
        "d" 'lsp-find-definition
        "D" 'xref-pop-marker-stack))
@@ -769,7 +780,7 @@ mode, with approximately 50 million keybindings.
 	    :straight (graphiql :type git :host github :repo "TOTBWF/graphiql.el")
 	    :config
 	    (setq graphiql-use-lsp t)
-	    (general-motion-definer
+	    (general-local-motion-definer
 	     'graphiql-mode-hook
 	     "j" '(graphiql-next-query     :wk "next query")
 	     "k" '(graphiql-previous-query :wk "previous query")))
@@ -784,7 +795,7 @@ mode, with approximately 50 million keybindings.
 ** Comint
    When we are in comint mode, let's bind some quick movement helpers
    #+BEGIN_SRC emacs-lisp
-     (general-motion-definer
+     (general-local-motion-definer
       'comint-mode-hook
       "j" 'comint-next-input
       "k" 'comint-previous-input)
@@ -851,7 +862,7 @@ mode, with approximately 50 million keybindings.
 
    Finally, let's set up the jump handler.
    #+BEGIN_SRC emacs-lisp
-     (general-motion-definer
+     (general-local-motion-definer
       'agda2-mode-hook
       "j" 'agda2-next-goal
       "k" 'agda2-previous-goal
