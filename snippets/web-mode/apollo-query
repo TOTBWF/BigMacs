@@ -1,0 +1,19 @@
+# key: query
+# name: apollo-query
+# --
+<Query<$1, $1Variables>
+  query={${1:$(upcase (s-snake-case yas-text))}}
+  variables={{$3}}
+>{({ loading, data, error }) => {
+  if (data) {
+    $4
+  } else if (loading) {
+    return (<div>Loading...</div>)
+  } else if (error) {
+    return (<div>Error!</div>)
+  }
+}}
+</Query>
+
+
+
