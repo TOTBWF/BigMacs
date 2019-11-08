@@ -1,0 +1,10 @@
+# -*- mode: snippet -*-
+# name: context-provider
+# key: context
+# --
+
+interface $1Context {
+
+}
+
+const $1Context = React.createContext<$1Context>({} as unknown as $1Context)
