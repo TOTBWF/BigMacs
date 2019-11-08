@@ -3,5 +3,9 @@
 # --
 interface $1Props {}
 const $1: FC<$1Props> = ({}: $1Props) => {
-  return (<div>TODO</div>)
+  return (
+    <div>
+      $1
+    </div>
+  )
 }

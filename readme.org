@@ -191,7 +191,6 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
       (general-mmap ";" 'evil-ex))
   #+END_SRC
 
-
   Next, let's install [[https://github.com/linktohack/evil-commentary][evil-commentary]], which lets us easily comment out code.
   #+BEGIN_SRC emacs-lisp
     (use-package evil-commentary
@@ -199,6 +198,18 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
       :config
       (evil-commentary-mode))
   #+END_SRC
+
+  Let's also install [[https://github.com/emacs-evil/evil-surround][evil-surround]], which lets us wrap a selection.
+  #+BEGIN_SRC emacs-lisp
+    (use-package evil-surround
+      :straight t
+      :ensure t
+      :config
+      (global-evil-surround-mode 1))
+  #+END_SRC
+  
+  Now, when we are in visual-state, we can suround our selection by
+  using =S=.
 
   Finally, let's install [[https://github.com/emacs-evil/evil-collection][evil-collection]].
   #+BEGIN_SRC emacs-lisp
@@ -214,6 +225,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
       (evil-collection-init 'compile)
       (evil-collection-init 'sly))
   #+END_SRC
+  
 *** Keybinding
   To begin, let's use =general.el= to create a base "definer".
   This starts everything with a =SPC= prefix, and sticks
@@ -227,7 +239,13 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
       :non-normal-prefix "C-SPC")
   #+END_SRC
   
-  <
+  Because we have mapped =C-u= to scrolling (as in vim), we can't do
+  ~universal-argument~. To fix this, let's bind a key to that.
+  #+BEGIN_SRC emacs-lisp
+    (global-definer
+      "u" '(universal-argument :wk "universal"))
+  #+END_SRC
+
 
   Next, let's create a macro that makes definers for each nested prefix maps.
   This lets us re-use each defininer, and prevent clobbering of definitions.
@@ -450,6 +468,25 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
 ** Toggles
    Sometimes it's useful to be able to toggle on and off some features
    at will.
+** Misc
+*** Spongebob Mode
+    #+BEGIN_SRC emacs-lisp
+      (define-minor-mode spongebob-mode
+        "StAgGeR ThE CaSe iN ThE BuFfeR."
+        :lighter " sPoNgEbOb"
+        (add-to-list 'after-change-functions #'spongebob-mode--do-it))
+
+      (defun spongebob-mode--do-it (beg end _)
+        (when spongebob-mode
+          (save-excursion
+            (cl-loop for pos from beg below end
+                     for char = (char-after pos)
+                     for upcase = (upcase char)
+                     when (if (cl-oddp pos) (eql char upcase) (not (eql char upcase)))
+                     do (progn (setf (point) pos)
+                               (delete-char 1)
+                               (insert-before-markers upcase))))))
+    #+END_SRC
 * Org
   I like to have my lines wrapped when writing org files,
   so let's turn on =auto-fill-mode=.
@@ -745,7 +782,9 @@ mode, with approximately 50 million keybindings.
    #+BEGIN_SRC emacs-lisp
      (general-global-menu-definer "git" "g")
      (general-global-git
-      "g" '(magit-status :wk "status"))
+       "b" '(magit-blame  :wk "blame")
+       "g" '(magit-status :wk "status")
+       "s" '(magit-status :wk "status"))
    #+END_SRC
 ** Brew
    It's a pain having to switch to the terminal to use brew,
@@ -834,8 +873,6 @@ mode, with approximately 50 million keybindings.
       "j" 'eshell-next-input
       "k" 'eshell-previous-input)
    #+END_SRC
-
-
 ** IRC
    For our IRC client, we are going to use =erc=.
    This is because it is one of the few emacs irc clients to use

@@ -6,10 +6,15 @@
   variables={{$3}}
 >{({ loading, data, error }) => {
   if (data) {
-    $4
+    return (
+      <div>
+        TODO
+      <div/>
+    )
   } else if (loading) {
     return (<div>Loading...</div>)
   } else if (error) {
+    console.log(JSON.stringify(error, null, 2))
     return (<div>Error!</div>)
   }
 }}
