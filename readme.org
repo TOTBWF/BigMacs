@@ -156,10 +156,24 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
       (load-theme 'doom-one t))
   #+END_SRC
 * Interface
+** Modeline
+   Let's add =diminish= so that we can easily theme the modeline.
+   #+BEGIN_SRC emacs-lisp
+     (use-package diminish
+       :straight t)
+   #+END_SRC
+
+   Next, let's add some helpful indicators.
+   #+BEGIN_SRC emacs-lisp
+     (display-time-mode 1)
+     (display-battery-mode 1)
+     (column-number-mode 1)
+   #+END_SRC
 ** Which Key
   First, let's add [[https://github.com/justbur/emacs-which-key][which-key]].
   #+BEGIN_SRC emacs-lisp
   (use-package which-key
+    :diminish which-key-mode
     :straight t)
   (which-key-mode)
   #+END_SRC
@@ -176,8 +190,6 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
 ** Evil
   [[https://github.com/emacs-evil/evil][evil]] provides us with vim-like keybindings inside of emacs.
 
-  First, let's load up evil. Make note of the section that
-  binds =leader-map= to =SPC=.
   #+BEGIN_SRC emacs-lisp  :results silent
     (use-package evil
       :straight t
@@ -195,6 +207,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
   #+BEGIN_SRC emacs-lisp
     (use-package evil-commentary
       :straight t
+      :diminish evil-commentary-mode
       :config
       (evil-commentary-mode))
   #+END_SRC
@@ -203,7 +216,6 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
   #+BEGIN_SRC emacs-lisp
     (use-package evil-surround
       :straight t
-      :ensure t
       :config
       (global-evil-surround-mode 1))
   #+END_SRC
@@ -259,7 +271,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
           `(progn
              (general-create-definer ,definer-name
                :wrapping global-definer
-               :prefix-map (quote ,(intern (concat "my-" def "-map")))
+               :prefix-map ',(intern (concat "my-" def "-map"))
                :infix ,infix-key
                :wk-full-keys nil
                "" '(:ignore t :which-key ,def))
@@ -287,6 +299,15 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
                             :prefix "g"
                             ,@body))))
   #+END_SRC
+  
+  We also need a mode-specific local leader.
+  #+BEGIN_SRC emacs-lisp
+    (general-create-definer general-mode-leader-definer
+      :states '(normal motion)
+      :wrapping global-definer
+      :prefix "SPC m"
+      "" '(:ignore t :which-key "mode"))
+  #+END_SRC
 ** Ivy
   For our filtering needs, we are going to use ivy.
   To start, let's load up =ivy=.
@@ -299,6 +320,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
   #+BEGIN_SRC emacs-lisp
     (use-package ivy
       :straight t
+      :diminish ivy-mode
       :init
       (setq ivy-re-builders-alist
             '((counsel-rg . ivy--regex-plus)
@@ -315,6 +337,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
   #+BEGIN_SRC emacs-lisp
     (use-package counsel
       :straight t
+      :diminish counsel-mode
       :config
       (counsel-mode 1)
       (setq ivy-initial-inputs-alist nil)
@@ -333,31 +356,6 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
       :straight t
       :after (ivy hydra))
   #+END_SRC
-** Modeline
-   Let's add =diminish= so that we can easily theme the modeline.
-   #+BEGIN_SRC emacs-lisp
-     (use-package diminish
-       :straight t
-       :init
-       (diminish 'auto-revert-mode)
-       (diminish 'projectile-mode)
-       (diminish 'lispy-mode)
-       (diminish 'yas-minor-mode)
-       (diminish 'ivy-mode)
-       (diminish 'counsel-mode)
-       (diminish 'company-mode)
-       (diminish 'smartparens-mode)
-       (diminish 'which-key-mode)
-       (diminish 'eldoc-mode)
-       (add-hook 'undo-tree-mode-hook (lambda () (diminish 'undo-tree-mode))))
-   #+END_SRC
-
-   Next, let's add some helpful indicators.
-   #+BEGIN_SRC emacs-lisp
-     (display-time-mode 1)
-     (display-battery-mode 1)
-     (column-number-mode 1)
-   #+END_SRC
 ** Help
   First, let's bind some of the =describe= functions
   to keys that are more in line with vim.
@@ -466,8 +464,6 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
        "T" '(tab-previous :wk "previous tab"))
    #+END_SRC
 ** Toggles
-   Sometimes it's useful to be able to toggle on and off some features
-   at will.
 ** Misc
 *** Spongebob Mode
     #+BEGIN_SRC emacs-lisp
@@ -497,6 +493,11 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
    =org-mode= is a monster of a
 mode, with approximately 50 million keybindings.
    As such, this is very much a work in progress!
+   #+BEGIN_SRC emacs-lisp
+     (general-mode-leader-definer 'org-mode-map
+      "'" 'org-edit-special)
+   #+END_SRC
+
 ** Babel
    It's a bit annoying that =org-babel= asks for confirmation all the time,
    so let's turn it off.
@@ -570,13 +571,14 @@ mode, with approximately 50 million keybindings.
   Next, let's bind some keys!
   #+BEGIN_SRC emacs-lisp
     (global-definer
-      "p"   '(:keymap projectile-command-map :package projectile :wk "project"))
+      "p" '(:keymap projectile-command-map :package projectile :wk "project"))
   #+END_SRC
 ** Autocompletion
   For autocompletion, we are going to use [[https://github.com/company-mode/company-mode][company-mode]].
   #+BEGIN_SRC emacs-lisp
     (use-package company
       :straight t
+      :diminish company-mode
       :config
       (setq company-tooltip-align-annotations t
             company-idle-delay 0.3
@@ -596,7 +598,8 @@ mode, with approximately 50 million keybindings.
    We use [[https://github.com/joaotavora/yasnippet][yasnippet]] for all of our snippeting needs.
    #+BEGIN_SRC emacs-lisp
      (use-package yasnippet
-       :straight t)
+       :straight t
+       :diminish yas-minor-mode)
    #+END_SRC
 
    The default yas bindings are pretty hard to use, so let's rebind them.
@@ -627,9 +630,23 @@ mode, with approximately 50 million keybindings.
        (add-hook 'find-file-hook 'auto-insert) ;; After a file is opened, insert.
        (setq auto-insert-alist nil))
    #+END_SRC
+** AutoRevert
+   =auto-revert-mode= reverts buffers when the underlying file on disk changes.
+   #+BEGIN_SRC emacs-lisp
+     (use-package autorevert
+       :diminish auto-revert-mode
+       :config
+       (global-auto-revert-mode))
+   #+END_SRC
+
 ** Flymake
    We use =flymake= to handle displaying errors inside of buffers.
    However, there a few tweaks required to get things working nicely OOTB.
+   #+BEGIN_SRC emacs-lisp
+     (use-package flymake
+       :diminish flymake-mode)
+   #+END_SRC
+
 
    For starters, =flymake= doesn't show errors in a posframe, so we need to install
    [[https://github.com/Ladicle/flymake-posframe][flymake-posframe]] for that.
@@ -666,7 +683,8 @@ mode, with approximately 50 million keybindings.
    pairs in emacs.
    #+BEGIN_SRC emacs-lisp
      (use-package smartparens
-       :straight t)
+       :straight t
+       :diminish smartparens-mode)
    #+END_SRC
 
    By default, we turn on smartparens globally (but not strict mode).
@@ -722,6 +740,17 @@ mode, with approximately 50 million keybindings.
       "j" 'xref-next-line)
    #+END_SRC
 
+** Undo Tree
+   [[https://elpa.gnu.org/packages/undo-tree.html][undo-tree]] lets us visualize Emacs undo history as a tree.
+   #+BEGIN_SRC emacs-lisp
+     (use-package undo-tree
+       :straight t
+       :diminish undo-tree-mode
+       :config
+       (general-global-menu-definer
+        "open" "o"
+        "u" '(undo-tree-visualize :wk "undo tree")))
+   #+END_SRC
 * LSP
   [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]] provides language services for quite a few languages.
   #+BEGIN_SRC emacs-lisp
@@ -907,8 +936,15 @@ mode, with approximately 50 million keybindings.
    #+BEGIN_SRC emacs-lisp
      (create-file-template ".*.agda$" "cubical-agda-template" 'agda2-mode)
    #+END_SRC
+*** Keybindings
+    First, let's add the mode keybindings.
+    #+BEGIN_SRC emacs-lisp
+      (general-mode-leader-definer 'agda2-mode-map
+        "l" '(agda2-load   :wk "load")
+        "r" '(agda2-refine :wk "refine"))
+    #+END_SRC
 
-   Finally, let's set up the jump handler.
+   Next, let's set up the jump handler.
    #+BEGIN_SRC emacs-lisp
      (general-local-motion-definer
       'agda2-mode-hook
@@ -964,9 +1000,6 @@ mode, with approximately 50 million keybindings.
      :straight t)
    #+END_SRC
    
-
-
-
 ** Lisp
    Next, let's enable =lispy= for editing emacs lisp code.
    #+BEGIN_SRC emacs-lisp
