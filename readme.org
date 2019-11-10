@@ -376,8 +376,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
 ** IMenu
    =imenu= is an extremely handy way of navigating files.
    #+BEGIN_SRC emacs-lisp
-     (general-global-menu-definer
-      "search" "/"
+     (global-definer
       "i" '(counsel-imenu :wk "imenu"))
    #+END_SRC
 
@@ -439,15 +438,20 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
        (interactive)
        (find-file "~/.emacs.d/readme.org"))
 
+     (defun open-private-config-file ()
+       (interactive)
+       (find-file "~/.emacs.d/private.org"))
+
      (defun open-straight-repo ()
        (interactive)
        (counsel-find-file "~/.emacs.d/straight/repos/"))
 
      (general-global-menu-definer "file" "f"
-                                  "f" '(counsel-find-file  :wk "find file")
-                                  "r" '(counsel-recentf    :wk "recent files")
-                                  "s" '(open-straight-repo :wk "straight repo")
-                                  "i" '(open-config-file   :wk "config file"))
+                                  "f" '(counsel-find-file        :wk "find file")
+                                  "r" '(counsel-recentf          :wk "recent files")
+                                  "s" '(open-straight-repo       :wk "straight repo")
+                                  "i" '(open-config-file         :wk "config file")
+                                  "I" '(open-private-config-file :wk "private config file"))
 
      (global-definer
        "." '(counsel-find-file :wk "find file"))
@@ -912,7 +916,44 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
      (advice-add 'circe-channel-killed
                  :override 'ignore)
    #+END_SRC
+   
+   Let's also define a quick helper for logging in to irc servers
+   using =auth-source=.
+   #+BEGIN_SRC emacs-lisp
+     (defun fetch-irc-password (server)
+       (fetch-password :host server))
+   #+END_SRC
+   
+   Next, let's add notifications. We will be using [[https://github.com/eqyiel/circe-notifications][circe-notifications]]
+   for this.
+   #+BEGIN_SRC emacs-lisp
+     (use-package circe-notifications
+       :straight t
+       :after (circe)
+       :init
+       (add-hook 'circe-server-connected-hook 'enable-circe-notifications)
+       :config
+       (when (string= system-type "darwin")
+         (setq circe-notifications-alert-style 'osx-notifier)))
+   #+END_SRC
 
+   I find it rather annoying to switch inbetween channels, so let's
+   whip up a quick helper to do just that.
+   #+BEGIN_SRC emacs-lisp
+     (defun counsel-switch-to-circe-buffer ()
+       "Switch to a circe buffer."
+       (interactive)
+       (ivy-read "IRC Channel: " (counsel--buffers-with-mode #'circe-channel-mode)
+                 :action #'ivy--switch-buffer-action
+                 :caller 'counsel-switch-to-circe-buffer))
+   #+END_SRC
+   
+   Now, let's bring this all together by binding some keys.
+   #+BEGIN_SRC emacs-lisp
+     (general-global-menu-definer "irc" "y"
+      "y" '(counsel-switch-to-circe-buffer :wk "switch to channel")
+      "c" '(circe                          :wk "connect"))
+   #+END_SRC
 * LSP
   [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]] provides language services for quite a few languages.
   #+BEGIN_SRC emacs-lisp
@@ -1064,9 +1105,6 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
        :config
        (lispyville-set-key-theme '(operators)))
    #+END_SRC
-
-
-
 *** Emacs Lisp
     Let's enable =flymake-mode= when editing elisp code.
     #+BEGIN_SRC emacs-lisp
