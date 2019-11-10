@@ -913,8 +913,11 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
    isn't the best behavior for me. To fix this, I redefine =circe-channel-killed=
    to prevent leaving upon buffer close.
    #+BEGIN_SRC emacs-lisp
-     (advice-add 'circe-channel-killed
-                 :override 'ignore)
+     (advice-add
+      'circe-channel-killed
+      :override
+      (lambda ()
+        (ignore-errors (circe-server-remove-chat-buffer circe-chat-target))))
    #+END_SRC
    
    Let's also define a quick helper for logging in to irc servers
@@ -946,6 +949,15 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
        (ivy-read "IRC Channel: " (counsel--buffers-with-mode #'circe-channel-mode)
                  :action #'ivy--switch-buffer-action
                  :caller 'counsel-switch-to-circe-buffer))
+
+     (defun counsel-switch-to-circe-buffer-transformer (buffer)
+       (with-current-buffer buffer
+         (let ((server-name (propertize (buffer-name (circe-server-buffer)) 'face 'font-lock-doc-face))
+               (read-indicator (when (member buffer tracking-buffers)
+                                 (propertize "*" 'face 'error))))
+           (concat buffer " " read-indicator "   " server-name))))
+
+     (ivy-set-display-transformer 'counsel-switch-to-circe-buffer 'counsel-switch-to-circe-buffer-transformer)
    #+END_SRC
    
    Now, let's bring this all together by binding some keys.
