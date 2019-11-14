@@ -252,7 +252,8 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
        (evil-collection-init 'flymake)
        (evil-collection-init 'compile)
        (evil-collection-init 'custom)
-       (evil-collection-init 'sly))
+       (evil-collection-init 'sly)
+       (evil-collection-init 'elfeed))
    #+END_SRC
   
 *** Keybinding
@@ -965,7 +966,35 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
      (general-global-menu-definer "irc" "y"
       "y" '(counsel-switch-to-circe-buffer :wk "switch to channel")
       "c" '(circe                          :wk "connect"))
+
+     (general-mode-leader-definer 'circe-channel-mode-map
+       "j" '(circe-command-JOIN  :wk "join")
+       "n" '(circe-command-NAMES :wk "names")
+       "r" '(circe-reconnect     :wk "reconnect"))
+
+     (general-mode-leader-definer 'circe-server-mode-map
+       "j" '(circe-command-JOIN  :wk "join")
+       "r" '(circe-reconnect     :wk "reconnect"))
    #+END_SRC
+** RSS
+   I use [[https://github.com/skeeto/elfeed][elfeed]] to manage my rss feeds.
+   #+BEGIN_SRC emacs-lisp
+     (use-package elfeed
+       :straight t
+       :defer t)
+   #+END_SRC
+
+   Now, managing large lists of feeds can be cumbersome, so let's bring
+   in [[https://github.com/remyhonig/elfeed-org][elfeed-org]] to help manage that.
+   #+BEGIN_SRC emacs-lisp
+     (use-package elfeed-org
+       :straight t
+       :defer t
+       :config
+       (elfeed-org)
+       (setq rmh-elfeed-org-files '("~/org/elfeed.org")))
+   #+END_SRC
+
 * LSP
   [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]] provides language services for quite a few languages.
   #+BEGIN_SRC emacs-lisp
@@ -1060,6 +1089,20 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
                           :background "#261230")
     #+END_SRC
 
+** C
+   For C, we shall be using [[https://github.com/MaskRay/emacs-ccls][ccls]] alongside =lsp-mode=.
+   #+BEGIN_SRC emacs-lisp
+     (use-package ccls
+       :straight t
+       :hook ((c-mode c++-mode objc-mode) . 'lsp))
+   #+END_SRC
+   
+   Let's make sure to not look inside the =ccls= cache when doing
+   projectile searches.
+   #+BEGIN_SRC emacs-lisp
+     (add-to-list 'projectile-globally-ignored-directories ".ccls-cache")
+   #+END_SRC
+
 ** CSS
    #+BEGIN_SRC emacs-lisp
      (add-hook 'less-css-mode-hook #'lsp)
@@ -1098,6 +1141,25 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
        (setq haskell-interactive-popup-errors nil))
    #+END_SRC
    
+   #+BEGIN_SRC emacs-lisp
+     (use-package dante
+       :straight t
+       :after haskell-mode
+       :hook (haskell-mode . dante-mode)
+       :init
+       (add-hook 'haskell-mode-hook 'flymake-mode)
+       :config
+       (setq dante-methods '(new-build stack bare-cabal bare-ghci))
+       ;; Dante only checks saved buffers, so let's disable on the fly checking
+       (setq-local flymake-no-changes-timeout nil)
+       (setq-local flymake-start-syntax-check-on-newline nil))
+   #+END_SRC
+   
+   Next, let's define some keybindings.
+   #+BEGIN_SRC emacs-lisp
+
+   #+END_SRC
+
 ** Lisp
    Next, let's enable [[https://github.com/abo-abo/lispy][lispy]] for editing lisp code.
    #+BEGIN_SRC emacs-lisp
@@ -1163,8 +1225,21 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
        :straight t
        :custom
        (web-mode-code-indent-offset 2 "Set indentation of js code to 2")
-       (web-mode-markup-indent-offset 2 "Set indentation of js code to 2"))
+       (web-mode-markup-indent-offset 2 "Set indentation of js code to 2")
+       (web-mode-indentation-params '(("lineup-args" . t)
+                                      ("lineup-calls" . t)
+                                      ("lineup-concats" . t)
+                                      ("lineup-quotes" . t)
+                                      ("lineup-ternary" . nil)
+                                      ("case-extra-offset" . t))))
    #+END_SRC
+   
+   Next, let's make sure that we don't look inside of =node_modules=
+   when using projectile file search.
+   #+BEGIN_SRC emacs-lisp
+     (add-to-list 'projectile-globally-ignored-directories "node_modules")
+   #+END_SRC
+
 
    Next, let's load the typescript language server.
    #+BEGIN_SRC emacs-lisp
