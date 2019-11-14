@@ -821,6 +821,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
    so let's use [[https://github.com/TOTBWF/counsel-brew][counsel-brew]] instead.
    #+BEGIN_SRC emacs-lisp
      (use-package counsel-brew
+       :if (string= system-type "darwin")
        :straight (counsel-brew :type git :host github
                                :repo "TOTBWF/counsel-brew")
        :commands counsel-brew)
