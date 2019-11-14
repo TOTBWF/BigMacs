@@ -827,25 +827,25 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
        :commands counsel-brew)
    #+END_SRC
 ** Docker
-   I use =counsel-docker= to manage docker containers.
-   As of right now, this is a WIP, so let's just bring this in from source.
+   Let's use [[https://github.com/Silex/docker.el][docker.el]] to manage docker containers.
    #+BEGIN_SRC emacs-lisp
-     (use-package counsel-docker
-       :load-path "~/Documents/projects/counsel-docker")
+     (use-package docker
+       :straight t)
+   #+END_SRC
+   
+   #+BEGIN_SRC emacs-lisp
+     (general-global-menu-definer
+      "docker" "d"
+      "c" '(docker-compose :wk "compose"))
    #+END_SRC
 
-   Next up, let's bind some keys.
+   
+   On top of that, let's add some packages for dealing with
+   Dockerfiles, and docker-compose files.
    #+BEGIN_SRC emacs-lisp
-     (evil-define-key 'normal 'global
-       (kbd "SPC d i") 'counsel-docker-image
-       (kbd "SPC d c") 'counsel-docker-container)
-
-     (which-key-add-key-based-replacements
-       "SPC d" "docker"
-       "SPC d i" "images"
-       "SPC d c" "containers")
+     (use-package dockerfile-mode
+       :straight t)
    #+END_SRC
-
 ** GraphiQL
    #+BEGIN_SRC emacs-lisp
      (use-package graphiql
