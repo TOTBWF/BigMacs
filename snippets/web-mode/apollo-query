@@ -9,7 +9,7 @@
     return (
       <div>
         TODO
-      <div/>
+      </div>
     )
   } else if (loading) {
     return (<div>Loading...</div>)
