@@ -1006,8 +1006,22 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
       (general-local-motion-definer
        'lsp-mode-hook
        "d" 'lsp-find-definition
-       "D" 'xref-pop-marker-stack))
+       "D" 'xref-pop-marker-stack)
+      (general-define-key
+       :states 'normal
+       :keymaps 'lsp-mode-map
+       "K" 'lsp-describe-thing-at-point))
   #+END_SRC
+
+  Let's also ensure that the lsp help buffer pops up at the bottom.
+  #+BEGIN_SRC emacs-lisp
+    (add-to-list 'display-buffer-alist
+                 '("\\*lsp-help\\*"
+                   (display-buffer-below-selected display-buffer-at-bottom)
+                   (inhibit-same-window . t)
+                   (window-height . 15)))
+  #+END_SRC
+
 
   Next, let's add [[https://github.com/tigersoldier/company-lsp][company-lsp]] for autocompletion support.
   #+BEGIN_SRC emacs-lisp
