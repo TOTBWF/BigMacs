@@ -155,13 +155,13 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
           mouse-wheel-scroll-amount '(1)
           mouse-wheel-progressive-speed nil)
   #+END_SRC
-  
+
   Avoid calling =line-move-partial=, increasing scroll speed.
   See [[https://emacs.stackexchange.com/questions/28736/emacs-pointcursor-movement-lag/28746][this]] for a more in-depth explanation.
   #+BEGIN_SRC emacs-lisp
     (setq auto-window-vscroll nil)
   #+END_SRC
-  
+
 * Themes
   There are a few options here, as I haven't totally settled.
   #+BEGIN_SRC emacs-lisp
@@ -177,7 +177,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
      (use-package diminish
        :straight t)
    #+END_SRC
-   
+
    Next, let's add some helpful indicators.
    #+BEGIN_SRC emacs-lisp
      (display-time-mode 1)
@@ -234,7 +234,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
        :config
        (global-evil-surround-mode 1))
    #+END_SRC
-  
+
    Now, when we are in visual-state, we can suround our selection by
    using =S=.
 
@@ -255,7 +255,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
        (evil-collection-init 'sly)
        (evil-collection-init 'elfeed))
    #+END_SRC
-  
+
 *** Keybinding
     To begin, let's use =general.el= to create a base "definer".
     This starts everything with a =SPC= prefix, and sticks
@@ -268,7 +268,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
         :prefix "SPC"
         :non-normal-prefix "C-SPC")
     #+END_SRC
-  
+
     Because we have mapped =C-u= to scrolling (as in vim), we can't do
     ~universal-argument~. To fix this, let's bind a key to that.
     #+BEGIN_SRC emacs-lisp
@@ -296,7 +296,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
                (,definer-name
                  ,@body)))))
     #+END_SRC
-  
+
     #+BEGIN_SRC emacs-lisp
       (general-create-definer general-global-motion-definer
         :keymaps 'override
@@ -317,7 +317,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
                               :prefix "g"
                               ,@body))))
     #+END_SRC
-  
+
     We also need a mode-specific local leader.
     #+BEGIN_SRC emacs-lisp
       (general-create-definer general-mode-leader-definer
@@ -391,7 +391,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
        (setq counsel-describe-function-function #'helpful-callable)
        (setq counsel-describe-variable-function #'helpful-variable))
    #+END_SRC
-   
+
    Next, let's add [[https://github.com/xuchunyang/elisp-demos][elisp-demos]], which provides some nice examples for some
    common functions.
    #+BEGIN_SRC emacs-lisp
@@ -541,12 +541,12 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
   #+BEGIN_SRC emacs-lisp
     (add-hook 'org-mode-hook 'auto-fill-mode)
   #+END_SRC
-  
+
 ** Keybindings
    =org-mode= is a monster of a
    mode, with approximately 50 million keybindings.
    As such, this is very much a work in progress!
-   
+
    First, there are a handful of commands that are useful even when
    not editing an org buffer. Let's bind those to some handy keybindings.
 
@@ -561,7 +561,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
      (setq org-src-tab-acts-natively t)
      (setq org-src-preserve-indentation nil)
    #+END_SRC
-   
+
    It's a bit annoying that =org-babel= asks for confirmation all the time,
    so let's turn it off.
    #+BEGIN_SRC emacs-lisp
@@ -575,12 +575,12 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
 
 * Auth Source
   =auth-source= lets us store and read GPG encrypted credentials.
-  
+
   First, let's set our default auth source.
   #+BEGIN_SRC emacs-lisp
     (setq auth-sources '("~/.authinfo.gpg"))
   #+END_SRC
-  
+
   Next, let's define a quick helper function for loading
   information from =auth-sources=.
   #+BEGIN_SRC emacs-lisp
@@ -757,12 +757,11 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
    #+END_SRC
 
 ** Whitespace
-   Let's make sure to highlight tabs.
+   Let's highlight any funky looking whitespace.
+
    #+BEGIN_SRC emacs-lisp
-     (use-package highlight-chars
-       :straight t
-       :config
-       (add-hook 'prog-mode-hook 'hc-highlight-tabs))
+     (setq whitespace-style '(face trailing empty tabs))
+     (global-whitespace-mode)
    #+END_SRC
 ** XRef
    Let's make the xref buffer a little less intrusive.
@@ -832,14 +831,14 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
      (use-package docker
        :straight t)
    #+END_SRC
-   
+
    #+BEGIN_SRC emacs-lisp
      (general-global-menu-definer
       "docker" "d"
       "c" '(docker-compose :wk "compose"))
    #+END_SRC
 
-   
+
    On top of that, let's add some packages for dealing with
    Dockerfiles, and docker-compose files.
    #+BEGIN_SRC emacs-lisp
@@ -883,7 +882,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
      (general-global-menu-definer "open" "o"
                                   "i" '(ielm :wk "ielm"))
    #+END_SRC
-   
+
 ** EShell
    #+BEGIN_SRC emacs-lisp
      (general-global-menu-definer "open" "o"
@@ -904,13 +903,31 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
       "j" 'eshell-next-input
       "k" 'eshell-previous-input)
    #+END_SRC
+** Prodigy
+   Let's install [[https://github.com/rejeep/prodigy.el][prodigy]] to help us manage long running background processes.
+
+   #+BEGIN_SRC emacs-lisp
+     (use-package prodigy
+       :straight t
+       :init
+       (add-to-list 'display-buffer-alist
+                    '("\\*prodigy\\*"
+                      (display-buffer-below-selected display-buffer-at-bottom)
+                      (inhibit-same-window . t)
+                      (window-height . 10)))
+       :config
+       (general-global-menu-definer
+        "open" "o"
+        "p" '(prodigy :wk "prodigy"))
+       (evil-collection-init 'prodigy))
+   #+END_SRC
 ** IRC
    For our irc client we are going to use [[https://github.com/jorgenschaefer/circe][circe]].
    #+BEGIN_SRC emacs-lisp
      (use-package circe
        :straight t)
    #+END_SRC
-   
+
    I use a IRC bouncer, so leaving the channel when a buffer is killed
    isn't the best behavior for me. To fix this, I redefine =circe-channel-killed=
    to prevent leaving upon buffer close.
@@ -921,14 +938,14 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
       (lambda ()
         (ignore-errors (circe-server-remove-chat-buffer circe-chat-target))))
    #+END_SRC
-   
+
    Let's also define a quick helper for logging in to irc servers
    using =auth-source=.
    #+BEGIN_SRC emacs-lisp
      (defun fetch-irc-password (server)
        (fetch-password :host server))
    #+END_SRC
-   
+
    Next, let's add notifications. We will be using [[https://github.com/eqyiel/circe-notifications][circe-notifications]]
    for this.
    #+BEGIN_SRC emacs-lisp
@@ -961,7 +978,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
 
      (ivy-set-display-transformer 'counsel-switch-to-circe-buffer 'counsel-switch-to-circe-buffer-transformer)
    #+END_SRC
-   
+
    Now, let's bring this all together by binding some keys.
    #+BEGIN_SRC emacs-lisp
      (general-global-menu-definer "irc" "y"
@@ -1109,13 +1126,27 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
    #+BEGIN_SRC emacs-lisp
      (use-package ccls
        :straight t
-       :hook ((c-mode c++-mode objc-mode) . 'lsp))
+       :hook ((c-mode c++-mode objc-mode) . 'lsp)
+       :config
+       (when (string= system-type "darwin")
+         (setq ccls-initialization-options
+               `(:clang (:resourceDir "/Library/Developer/CommandLineTools/usr/lib/clang/10.0.1"
+                         :extra-args ["-isystem" "/Library/Developer/CommandLineTools/usr/include/c++/v1"
+                                      "-isystem" "/Library/Developer/CommandLineTools/usr/lib/clang/10.0.1/include"
+                                      "-isystem" "/Library/Developer/CommandLineTools/usr/include"
+                                      "-isystem" "/Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk/usr/include"])))))
    #+END_SRC
-   
+
    Let's make sure to not look inside the =ccls= cache when doing
    projectile searches.
    #+BEGIN_SRC emacs-lisp
      (add-to-list 'projectile-globally-ignored-directories ".ccls-cache")
+   #+END_SRC
+
+   For some insane reason, MakeFiles require tabs.
+   #+BEGIN_SRC emacs-lisp
+     (add-hook 'makefile-mode-hook (lambda ()
+                                     (setq indent-tabs-mode t)))
    #+END_SRC
 
 ** CSS
@@ -1147,7 +1178,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
 ** Haskell
    First, let's install =haskell-mode=. This provides syntax
    highlighting and repl interaction.
-   
+
 
    #+BEGIN_SRC emacs-lisp
      (use-package haskell-mode
@@ -1155,7 +1186,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
        :config
        (setq haskell-interactive-popup-errors nil))
    #+END_SRC
-   
+
    #+BEGIN_SRC emacs-lisp
      (use-package dante
        :straight t
@@ -1169,7 +1200,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
        (setq-local flymake-no-changes-timeout nil)
        (setq-local flymake-start-syntax-check-on-newline nil))
    #+END_SRC
-   
+
    Next, let's define some keybindings.
    #+BEGIN_SRC emacs-lisp
 
@@ -1184,7 +1215,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
        :config
        (setq lispy-colon-p nil))
    #+END_SRC
-   
+
    Let's also add [[https://github.com/noctuid/lispyville][lispyville]] for better evil integration.
    #+BEGIN_SRC emacs-lisp
      (use-package lispyville
@@ -1200,7 +1231,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
       (general-add-hook 'emacs-lisp-mode-hook
                         '(flymake-mode))
     #+END_SRC
-   
+
     Let's also install [[https://github.com/Fanael/highlight-defined][highlight-defined]], which will handily highlight defined
     emacs lisp symbols.
     #+BEGIN_SRC emacs-lisp
@@ -1248,7 +1279,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
                                       ("lineup-ternary" . nil)
                                       ("case-extra-offset" . t))))
    #+END_SRC
-   
+
    Next, let's make sure that we don't look inside of =node_modules=
    when using projectile file search.
    #+BEGIN_SRC emacs-lisp
@@ -1266,11 +1297,50 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
                    (lsp))))
    #+END_SRC
 
+   While we are at it, let's enable =flymake-eslint=.
+   #+BEGIN_SRC emacs-lisp
+     (use-package flymake-eslint
+       :straight t
+       :init
+       (add-hook 'web-mode-hook (lambda () (flymake-eslint-enable))))
+   #+END_SRC
+
+   #+BEGIN_SRC emacs-lisp
+
+   #+END_SRC
+
+
    Next, let's add =npm-mode=.
    #+BEGIN_SRC emacs-lisp
      (use-package npm-mode
        :straight t)
    #+END_SRC
+
+** Purescript
+   First, let's use =purescript-mode= for syntax highlighting + indentation.
+   #+BEGIN_SRC emacs-lisp
+     (use-package purescript-mode
+       :straight t
+       :config
+       (add-hook 'purescript-mode-hook
+                 (lambda ()
+                   (psc-ide-mode)
+                   (flycheck-mode)
+                   (turn-on-purescript-indentation))))
+    #+END_SRC
+
+    We also use =psc-ide= to handle autocompletion + errors.
+    #+BEGIN_SRC emacs-lisp
+      (use-package psc-ide
+        :straight t)
+    #+END_SRC
+
+    Let's also set some jump handlers.
+    #+BEGIN_SRC emacs-lisp
+      (general-local-motion-definer
+       'purescript-mode-hook
+       "d" 'psc-ide-goto-definition)
+    #+END_SRC
 
 * Private Configuration
   If you want to have personal configurations
@@ -1281,7 +1351,6 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
     (when (file-exists-p "~/.emacs.d/private.el")
       (load "~/.emacs.d/private.el"))
   #+END_SRC
-  
   When saving customizations, let's use another file.
   #+BEGIN_SRC emacs-lisp
     (setq custom-file "~/.emacs.d/custom.el")
