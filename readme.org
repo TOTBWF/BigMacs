@@ -458,6 +458,19 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
        "." '(counsel-find-file :wk "find file"))
    #+END_SRC
 ** Windows
+   To start, let's install =ace-window=.
+   #+BEGIN_SRC emacs-lisp
+     (use-package ace-window
+       :straight t
+       :config
+       (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l))
+       (general-global-menu-definer "window" "w"
+                                    "w" '(ace-window :wk "switch") ;; NOTE: You can also use 'SPC u SPC w w'
+                                    "W" '((lambda () (interactive) (ace-window 4)) :wk "swap")))
+   #+END_SRC
+
+
+
    Let's bind window management to some nicer keys
    #+BEGIN_SRC emacs-lisp
      (general-global-menu-definer "window" "w"
