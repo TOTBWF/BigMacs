@@ -1,13 +1,18 @@
 .local
 .lsp-session-v1
+.cask
 auto-save-list
 elpa
 fsautocomplete
 projectile-bookmarks.eld
+projectile.cache
 recentf
 straight
 transient
 eshell
+request
+url
 
 private.*
+custom.*
 readme.el
