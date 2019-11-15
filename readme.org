@@ -1277,7 +1277,8 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
                                       ("lineup-concats" . t)
                                       ("lineup-quotes" . t)
                                       ("lineup-ternary" . nil)
-                                      ("case-extra-offset" . t))))
+                                      ("case-extra-offset" . t)))
+       (web-mode-enable-auto-quoting nil))
    #+END_SRC
 
    Next, let's make sure that we don't look inside of =node_modules=
