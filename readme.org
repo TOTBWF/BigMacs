@@ -548,12 +548,40 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
                                (delete-char 1)
                                (insert-before-markers upcase))))))
     #+END_SRC
+
+   I also rather like =smart-mode-line=, so let's install that.
+   #+BEGIN_SRC emacs-lisp
+     (use-package smart-mode-line
+       :straight t
+       :init
+       (setq sml/theme nil)
+       (add-hook 'after-init-hook 'sml/setup))
+   #+END_SRC
+
+
 * Org
   I like to have my lines wrapped when writing org files,
   so let's turn on =auto-fill-mode=.
   #+BEGIN_SRC emacs-lisp
     (add-hook 'org-mode-hook 'auto-fill-mode)
   #+END_SRC
+
+  Let's also add =htmlize= for html exporting.
+  #+BEGIN_SRC emacs-lisp
+    (use-package htmlize
+      :straight t)
+   #+END_SRC
+
+   Let's also install [[https://github.com/leotaku/flycheck-aspell][flycheck-aspell]] for spellchecking. The name of
+   this package is a bit of a misnomer, as it also implements a
+   =flymake= backend.
+   #+BEGIN_SRC emacs-lisp
+     (use-package flymake-aspell
+       :straight (flymake-aspell :type git :host github
+                                 :repo "leotaku/flycheck-aspell"
+                                 :files ("flymake-aspell.el")))
+   #+END_SRC
+
 
 ** Keybindings
    =org-mode= is a monster of a
@@ -584,6 +612,39 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
    Let's also add a hook to prevent =org-babel= from adding tabs.
    #+BEGIN_SRC emacs-lisp
      (add-hook 'org-mode-hook (lambda () (setq indent-tabs-mode nil)))
+   #+END_SRC
+
+   #+BEGIN_SRC emacs-lisp
+     ;; (add-to-list 'org-src-lang-modes '("inline-js" . javascript)) ;; js2 if you're fancy
+
+     (defvar org-babel-default-header-args:inline-js
+       '((:results . "html")
+         (:exports . "results")))
+     (defun org-babel-execute:inline-js (body _params)
+       (format "<script type=\"text/javascript\">\n%s\n</script>" body))
+   #+END_SRC
+
+   Let's also let babel work for some other languages.
+
+   #+BEGIN_SRC emacs-lisp
+     (org-babel-do-load-languages
+      'org-babel-load-languages
+      '((latex . t)))
+   #+END_SRC
+** LaTeX
+   Let's add the tex binaries to our path.
+   #+BEGIN_SRC emacs-lisp
+     (add-to-path "/Library/TeX/texbin")
+   #+END_SRC
+
+   I use =tikz= quite frequently, so let's add it to all latex headers.
+   #+BEGIN_SRC emacs-lisp
+     (add-to-list 'org-latex-packages-alist
+                  '("" "tikz" t))
+   #+END_SRC
+
+   #+BEGIN_SRC emacs-lisp
+     (setq org-latex-create-formula-image-program 'imagemagick)
    #+END_SRC
 
 * Auth Source
@@ -633,6 +694,11 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
      (global-definer
        "p" '(:keymap projectile-command-map :package projectile :wk "project"))
    #+END_SRC
+
+   #+BEGIN_SRC emacs-lisp
+
+   #+END_SRC
+
 ** Autocompletion
    For autocompletion, we are going to use [[https://github.com/company-mode/company-mode][company-mode]].
    #+BEGIN_SRC emacs-lisp
@@ -775,6 +841,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
    #+BEGIN_SRC emacs-lisp
      (setq whitespace-style '(face trailing empty tabs))
      (global-whitespace-mode)
+     (diminish 'global-whitespace-mode)
    #+END_SRC
 ** XRef
    Let's make the xref buffer a little less intrusive.
@@ -828,6 +895,34 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
        "g" '(magit-status :wk "status")
        "s" '(magit-status :wk "status"))
    #+END_SRC
+
+   While we are here, let's add nice indicators for hunks by using [[https://github.com/syohex/emacs-git-gutter-fringe][git-gutter-fringe]].
+   #+BEGIN_SRC emacs-lisp
+     (use-package git-gutter-fringe
+       :straight t
+       :diminish git-gutter-mode
+       :init
+       ;; Hack for org mode
+       (setq git-gutter:disabled-modes '(fundamental-mode image-mode pdf-view-mode))
+       (git-gutter-mode)
+       :config
+       (general-global-git
+         "h" '(git-gutter:stage-hunk :wk "stage hunk")))
+   #+END_SRC
+
+   =git-timemachine= lets us quickly browse through a repositories
+   history, which is quite handy.
+   #+BEGIN_SRC emacs-lisp
+          (use-package git-timemachine
+            :straight t
+            :init
+            (evil-collection-init 'git-timemachine)
+            (general-global-git
+              "t" '(git-timemachine :wk "timemachine")))
+   #+END_SRC
+
+
+
 ** Brew
    It's a pain having to switch to the terminal to use brew,
    so let's use [[https://github.com/TOTBWF/counsel-brew][counsel-brew]] instead.
