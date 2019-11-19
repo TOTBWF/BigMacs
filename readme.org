@@ -184,6 +184,18 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
      (display-battery-mode 1)
      (column-number-mode 1)
    #+END_SRC
+
+   I also rather like =smart-mode-line=, so let's install that.
+   #+BEGIN_SRC emacs-lisp
+     (use-package smart-mode-line
+       :straight t
+       :init
+       (setq sml/theme nil)
+       (add-hook 'after-init-hook 'sml/setup)
+       :config
+       (set-face-attribute 'sml/charging nil :inherit 'success))
+   #+END_SRC
+
 ** Which Key
    First, let's add [[https://github.com/justbur/emacs-which-key][which-key]].
    #+BEGIN_SRC emacs-lisp
@@ -549,16 +561,6 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
                                (insert-before-markers upcase))))))
     #+END_SRC
 
-   I also rather like =smart-mode-line=, so let's install that.
-   #+BEGIN_SRC emacs-lisp
-     (use-package smart-mode-line
-       :straight t
-       :init
-       (setq sml/theme nil)
-       (add-hook 'after-init-hook 'sml/setup))
-   #+END_SRC
-
-
 * Org
   I like to have my lines wrapped when writing org files,
   so let's turn on =auto-fill-mode=.
@@ -581,8 +583,6 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
                                  :repo "leotaku/flycheck-aspell"
                                  :files ("flymake-aspell.el")))
    #+END_SRC
-
-
 ** Keybindings
    =org-mode= is a monster of a
    mode, with approximately 50 million keybindings.
@@ -647,6 +647,42 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
      (setq org-latex-create-formula-image-program 'imagemagick)
    #+END_SRC
 
+** Highlight Todos
+   I find it useful to highlight todos in any mode. =hl-todo=
+   provides this for us.
+   #+BEGIN_SRC emacs-lisp
+     (use-package hl-todo
+       :straight t
+       :hook (prog-mode . hl-todo-mode)
+       :config
+       (setq hl-todo-highlight-punctuation ":"
+             hl-todo-keyword-faces
+             `(("TODO"  . ,(face-foreground 'warning))
+               ("FIXME" . ,(face-foreground 'error))
+               ("HACK"  . ,(face-foreground 'font-lock-constant-face))
+               ("NOTE"  . ,(face-foreground 'success)))))
+    #+END_SRC
+
+* LaTeX
+  Let's use =auctex= for our LaTeX editing environment.
+  #+BEGIN_SRC emacs-lisp
+    (use-package auctex
+      :straight t
+      :defer t
+      :config
+      (setq TeX-auto-save t
+            TeX-parse-self t))
+  #+END_SRC
+
+  #+BEGIN_SRC emacs-lisp
+    (use-package company-auctex
+      :straight t
+      :defer
+      :init
+      (add-hook 'TeX-mode-hook 'company-mode)
+      :config
+      (company-auctex-init))
+  #+END_SRC
 * Auth Source
   =auth-source= lets us store and read GPG encrypted credentials.
 
@@ -719,6 +755,14 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
    Start autocompletion when you press tab.
    #+BEGIN_SRC emacs-lisp
      (define-key company-mode-map (kbd "TAB") #'company-indent-or-complete-common)
+   #+END_SRC
+
+   I often use greek symbols, so this will be handy.
+   #+BEGIN_SRC emacs-lisp
+     (use-package company-math
+       :straight t
+       :config
+       (add-to-list 'company-backends 'company-math-symbols-unicode))
    #+END_SRC
 ** Snippets
    We use [[https://github.com/joaotavora/yasnippet][yasnippet]] for all of our snippeting needs.
@@ -920,7 +964,17 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
             (general-global-git
               "t" '(git-timemachine :wk "timemachine")))
    #+END_SRC
-
+*** Ediff
+    By default, =ediff= has some odd defaults. Let's change that
+    #+BEGIN_SRC emacs-lisp
+      (use-package ediff
+        :defer t
+        :config
+        ;; Disable whitespace checking
+        (setq ediff-diff-options "w")
+        (setq ediff-split-window-function #'split-window-vertically
+              ediff-window-setup-function #'ediff-setup-windows-plain))
+    #+END_SRC
 
 
 ** Brew
