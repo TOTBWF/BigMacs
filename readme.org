@@ -193,7 +193,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
        (setq sml/theme nil)
        (add-hook 'after-init-hook 'sml/setup)
        :config
-       (set-face-attribute 'sml/charging nil :inherit 'success))
+       (doom-themes-set-faces 'user '(sml/charging :inherit 'success)))
    #+END_SRC
 
 ** Which Key
@@ -261,6 +261,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
        (evil-collection-init 'info)
        (evil-collection-init 'helpful)
        (evil-collection-init 'dired)
+       (evil-collection-init 'calc)
        (evil-collection-init 'flymake)
        (evil-collection-init 'compile)
        (evil-collection-init 'custom)
@@ -352,6 +353,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
        :straight t
        :diminish ivy-mode
        :init
+       (setq ivy-use-selectable-prompt t)
        (setq ivy-re-builders-alist
              '((counsel-rg . ivy--regex-plus)
                (swiper . ivy--regex-plus)
@@ -438,7 +440,8 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
      (general-global-menu-definer "buffer" "b"
                                   "b" '(counsel-switch-buffer :wk "switch buffer")
                                   "d" '(kill-current-buffer   :wk "kill buffer")
-                                  "r" '(rename-buffer         :wk "rename buffer"))
+                                  "r" '(rename-buffer         :wk "rename buffer")
+                                  "F" '(font-lock-fontify-buffer :wk "fontify buffer"))
 
      (global-definer
        "," '(counsel-switch-buffer :wk "switch buffer")
@@ -562,6 +565,12 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
     #+END_SRC
 
 * Org
+** Setup
+  #+BEGIN_SRC emacs-lisp
+  (use-package org
+    :straight t)
+  #+END_SRC
+
   I like to have my lines wrapped when writing org files,
   so let's turn on =auto-fill-mode=.
   #+BEGIN_SRC emacs-lisp
@@ -588,12 +597,49 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
    mode, with approximately 50 million keybindings.
    As such, this is very much a work in progress!
 
+   To begin, let's make sure that all of our evil commands
+   still function when dealing with things like ~org-agenda~.
+   We will do this by installing [[https://github.com/Somelauw/evil-org-mode][evil-org-mode.]]
+   #+BEGIN_SRC emacs-lisp
+     (use-package evil-org
+       :straight t
+       :after org
+       :config
+       (add-hook 'org-mode-hook 'evil-org-mode)
+       (add-hook 'evil-org-mode-hook
+                 (lambda ()
+                   (evil-org-set-key-theme)))
+       (require 'evil-org-agenda)
+       (evil-org-agenda-set-keys))
+   #+END_SRC
+
    First, there are a handful of commands that are useful even when
    not editing an org buffer. Let's bind those to some handy keybindings.
 
    #+BEGIN_SRC emacs-lisp
      (general-mode-leader-definer 'org-mode-map
-       "'" 'org-edit-special)
+       "'" '(org-edit-special     :wk "edit")
+       "." '(counsel-org-goto     :wk "goto")
+       "/" '(counsel-org-goto-all :wk "goto all"))
+   #+END_SRC
+
+   Let's also define a global org menu for common tasks.
+   #+BEGIN_SRC emacs-lisp
+     (defun browse-org-dir ()
+       (interactive)
+       (counsel-find-file org-directory))
+
+     (general-global-menu-definer
+      "notes" "n"
+      "n" '(browse-org-dir :wk "browse"))
+   #+END_SRC
+
+** Agenda
+   Let's make it very easy to access the org agenda from anywhere.
+   #+BEGIN_SRC emacs-lisp
+     (general-global-menu-definer
+      "open" "o"
+      "a" '(org-agenda :wk "agenda"))
    #+END_SRC
 ** Babel
    First, let's ensure that =org-babel= handles indentation nicely.
@@ -624,14 +670,94 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
        (format "<script type=\"text/javascript\">\n%s\n</script>" body))
    #+END_SRC
 
+   I also _love_ to use gnuplot when working with literate org,
+   especially when experimenting, so let's install that.
+   #+BEGIN_SRC emacs-lisp
+     (use-package gnuplot
+       :straight t)
+   #+END_SRC
+
+   Now, =ob-haskell= has some... quirks. It really doesn't handle
+   multi-line stuff very well. To fix this, we are going to do some
+   wacky hacks.
+   #+BEGIN_SRC emacs-lisp
+     (advice-add 'org-babel-execute:haskell :override
+                 (lambda (body params)
+                   "Execute a block of Haskell code."
+                   (require 'inf-haskell)
+                   (add-hook 'inferior-haskell-hook
+                             (lambda ()
+                               (setq-local comint-prompt-regexp
+                                           (concat haskell-prompt-regexp "\\|^λ?> "))))
+                   (let* ((session (cdr (assq :session params)))
+                          (result-type (cdr (assq :result-type params)))
+                          (multi-line (string= "yes" (cdr (assq :multi-line params))))
+                          (full-body (org-babel-expand-body:generic
+                                      body params
+                                      (org-babel-variable-assignments:haskell params)))
+                          (session (org-babel-haskell-initiate-session session params))
+                          (comint-preoutput-filter-functions
+                           (cons 'ansi-color-filter-apply comint-preoutput-filter-functions))
+                          (raw (org-babel-comint-with-output
+                                   (session org-babel-haskell-eoe t full-body)
+                                 (when multi-line
+                                   (insert ":{")
+                                   (comint-send-input nil t))
+                                 (insert (org-trim full-body))
+                                 (comint-send-input nil t)
+                                 (when multi-line
+                                   (insert ":}")
+                                   (comint-send-input nil t))
+                                 (insert org-babel-haskell-eoe)
+                                 (comint-send-input nil t)))
+                          (results (mapcar #'org-strip-quotes
+                                           (cdr (member org-babel-haskell-eoe
+                                                        (reverse (mapcar #'org-trim raw)))))))
+                     (org-babel-reassemble-table
+                      (let ((result
+                             (pcase result-type
+                               (`output (mapconcat #'identity (reverse (cdr results)) "\n"))
+                               (`value (car results)))))
+                        (org-babel-result-cond (cdr (assq :result-params params))
+                          result (org-babel-script-escape result)))
+                      (org-babel-pick-name (cdr (assq :colname-names params))
+                                           (cdr (assq :colname-names params)))
+                      (org-babel-pick-name (cdr (assq :rowname-names params))
+                                           (cdr (assq :rowname-names params)))))))
+   #+END_SRC
+
+
    Let's also let babel work for some other languages.
 
    #+BEGIN_SRC emacs-lisp
      (org-babel-do-load-languages
       'org-babel-load-languages
-      '((latex . t)))
+      '((latex . t)
+        (gnuplot . t)
+        (shell . t)
+        (haskell . t)))
+   #+END_SRC
+** Capture
+   [[https://orgmode.org/manual/Capture.html#Capture][org-capture]] gives us a really handy way of creating different types
+   of entries.
+
+   First, let's add some handy templates for capturing common things.
+   #+BEGIN_SRC emacs-lisp
+     (setq org-capture-templates
+           '(("t" "Personal Todo" entry
+              (file+headline "todo.org" "Inbox")
+              "* TODO %?\n%i\n%a")))
+   #+END_SRC
+
+   finally, let's bind ~org-capture~ to something easy to reach.
+   #+BEGIN_SRC emacs-lisp
+     (global-definer
+       "c" '(counsel-org-capture :wk "capture"))
    #+END_SRC
 ** LaTeX
+   :PROPERTIES:
+   :ORDERED:  t
+   :END:
    Let's add the tex binaries to our path.
    #+BEGIN_SRC emacs-lisp
      (add-to-path "/Library/TeX/texbin")
@@ -644,7 +770,35 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
    #+END_SRC
 
    #+BEGIN_SRC emacs-lisp
-     (setq org-latex-create-formula-image-program 'imagemagick)
+     (setq org-latex-create-formula-image-program 'dvisvgm)
+   #+END_SRC
+
+   I find that the org latex previews are too small by default, so
+   let's make them a bit bigger.
+   #+BEGIN_SRC emacs-lisp
+     (setq org-format-latex-options (plist-put org-format-latex-options :scale 1.5))
+   #+END_SRC
+
+** TODO Jira
+   #+BEGIN_SRC emacs-lisp
+     (use-package ejira
+       :straight (ejira :type git :host github
+                        :repo "nyyManni/ejira")
+       :init
+       (setq ejira-org-directory "~/jira"))
+   #+END_SRC
+
+   #+BEGIN_SRC emacs-lisp
+     (defun ejira-browse-issue ()
+       (interactive)
+       (browse-url (concat (replace-regexp-in-string "/*$" "" jiralib2-url) "/browse/" (ejira-issue-id-under-point))))
+   #+END_SRC
+** Pomodoro
+   I like to use [[https://github.com/marcinkoziej/org-pomodoro][org-pomodoro]] to track my time.
+   #+BEGIN_SRC emacs-lisp
+     (use-package org-pomodoro
+       :straight t
+       :after org-plus-contrib)
    #+END_SRC
 
 ** Highlight Todos
@@ -670,6 +824,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
       :straight t
       :defer t
       :config
+      (require 'smartparens-latex)
       (setq TeX-auto-save t
             TeX-parse-self t))
   #+END_SRC
@@ -1345,6 +1500,8 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
    #+BEGIN_SRC emacs-lisp
      (use-package haskell-mode
        :straight t
+       :init
+       (add-hook 'haskell-mode-hook 'interactive-haskell-mode)
        :config
        (setq haskell-interactive-popup-errors nil))
    #+END_SRC
@@ -1356,6 +1513,14 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
        :hook (haskell-mode . dante-mode)
        :init
        (add-hook 'haskell-mode-hook 'flymake-mode)
+       (setq dante-load-flags '("+c"
+                                "-Wwarn=missing-home-modules"
+                                "-fno-diagnostics-show-caret"
+                                ;; neccessary to make attrap-attrap useful:
+                                "-Wall"
+                                ;; necessary to make company completion useful:
+                                "-fdefer-typed-holes"
+                                "-fdefer-type-errors"))
        :config
        (setq dante-methods '(new-build stack bare-cabal bare-ghci))
        ;; Dante only checks saved buffers, so let's disable on the fly checking
@@ -1371,11 +1536,13 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
 ** Lisp
    Next, let's enable [[https://github.com/abo-abo/lispy][lispy]] for editing lisp code.
    #+BEGIN_SRC emacs-lisp
-     (use-package lispy
-       :straight t
-       :hook (emacs-lisp-mode . lispy-mode)
-       :config
-       (setq lispy-colon-p nil))
+          (use-package lispy
+            :straight t
+            :hook
+            (emacs-lisp-mode . lispy-mode)
+            (clojure-mode . lispy-mode)
+            :config
+            (setq lispy-colon-p nil))
    #+END_SRC
 
    Let's also add [[https://github.com/noctuid/lispyville][lispyville]] for better evil integration.
@@ -1421,6 +1588,17 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
         :gfhook 'lispy-mode)
     #+END_SRC
 
+*** Clojure
+    First, let's use [[https://github.com/clojure-emacs/cider][cider]].
+    #+BEGIN_SRC emacs-lisp
+      (use-package cider
+        :straight t
+        :hook (clojure-mode . cider-mode)
+        :config
+        ;; (general-mode-leader-definer 'cider-mode
+        ;;   "j" '(cider-jack-in-cljs :wk "jack"))
+        )
+    #+END_SRC
 ** Typescript
    Typescript is a bit of a pain to get working, mostly due to
    the evils of JSX.
