@@ -1,0 +1,4 @@
+# key: instance
+# name: instance
+# --
+instance ${1:$(s-lower-camel-case yas-text)}${2:$(s-upper-camel-case yas-text)} :: $1 ($2) where

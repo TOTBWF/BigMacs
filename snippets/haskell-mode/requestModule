@@ -1,0 +1,45 @@
+# key: requestModuel
+# name: requestModule
+# --
+{-# LANGUAGE DerivingVia #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE TypeFamilies #-}
+module Indicee.Requests.${1:Request}
+  ( $1Request(..)
+  , $1Response(..)
+  ) where
+
+import qualified Prelude
+import Data.Aeson (ToJSON(..), FromJSON(..), genericToJSON, genericParseJSON)
+import Data.Aeson.Types (Options(..), defaultOptions)
+import Text.PrettyPrint (vcat, ($+$), (<+>))
+import Text.PrettyPrint.HughesPJClass (Pretty(..))
+import Text.ProtocolBuffers (defaultValue)
+
+import qualified Indicee.ProtoBuff.PB$1.$1Request as PB$1Request
+import qualified Indicee.ProtoBuff.PB$1.$1Response as PB$1Response
+
+import Stytch.PrettyUtil (pprShowText, ShowPretty(..))
+import Stytch.ProtoBuff (Messageable(..), fromMessage, toMessage)
+import Stytch.TextUtil (ShowText)
+import Stytch.Prelude
+
+
+instance Pretty $1Request where
+    pPrint $1Request{..} = hdr $+$ body
+        where
+          hdr = "$1Request"
+          body = vcat []
+
+deriving via (ShowPretty $1Request) instance ShowText $1Request
+deriving via (ShowPretty $1Request) instance Prelude.Show $1Request
+
+instance Pretty $1Response where
+    pPrint $1Response{..} = hdr $+$ body
+        where
+          hdr = "$1Response"
+          body = vcat []
+
+deriving via (ShowPretty $1Response) instance ShowText $1Response
+deriving via (ShowPretty $1Response) instance Prelude.Show $1Response

@@ -1,0 +1,10 @@
+# key: module
+# name: module
+# --
+{-# LANGUAGE NoImplicitPrelude #-}
+
+module ${1:Module}
+  (
+  ) where
+
+import Stytch.Prelude

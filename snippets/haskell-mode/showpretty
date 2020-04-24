@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: showpretty
+# key: showpretty
+# --
+
+deriving via (ShowPretty $1) instance ShowText $1
+deriving via (ShowPretty $1) instance Prelude.Show $1

@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: newtype
+# key: newtype
+# --
+newtype $1 = $1 { un$1 :: $2 }

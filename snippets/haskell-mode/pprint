@@ -1,0 +1,8 @@
+# key: pprint
+# name: pretty
+# --
+instance Pretty ${1:Type} where
+    pPrint $1{..} = hdr $+$ body
+        where
+          hdr = "$1"
+          body = vcat []
