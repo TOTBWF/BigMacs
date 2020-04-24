@@ -1,7 +1,10 @@
 .local
 .lsp-session-v1
 .cask
+.cache/
+.dap-breakpoints
 auto-save-list
+bookmarks
 elpa
 fsautocomplete
 projectile-bookmarks.eld
@@ -9,9 +12,16 @@ projectile.cache
 recentf
 straight
 transient
+tramp
 eshell
 request
 url
+
+eclipse.jdt.ls/
+forge-database.sqlite
+logview-cache.extmap
+network-security.data
+workspace/
 
 private.*
 custom.*
