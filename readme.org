@@ -1,5 +1,5 @@
-#+TITLE: BigMacs
-#+AUTHOR: Reed Mullanix
+#+Title: BigMacs
+#+AUTHOR: Reed Mullanix and AcidBurn
 #+PROPERTY: header-args :tangle yes :results silent
 #+TOC: true
 
@@ -9,7 +9,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
 * Setup
 ** Package Management
    First, let's load up some basic bootstrap code for [[https://github.com/raxod502/straight.el][straight.el.]]
-   #+BEGIN_SRC emacs-lisp
+      #+BEGIN_SRC emacs-lisp
      (defvar bootstrap-version)
      (let ((bootstrap-file
             (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
@@ -165,10 +165,10 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
 * Themes
   There are a few options here, as I haven't totally settled.
   #+BEGIN_SRC emacs-lisp
-    (use-package doom-themes
+    (use-package phoenix-dark-mono-theme
       :straight t
       :config
-      (load-theme 'doom-one t))
+      (load-theme 'phoenix-dark-mono t))
   #+END_SRC
 * Interface
 ** Modeline
@@ -191,9 +191,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
        :straight t
        :init
        (setq sml/theme nil)
-       (add-hook 'after-init-hook 'sml/setup)
-       :config
-       (doom-themes-set-faces 'user '(sml/charging :inherit 'success)))
+       (add-hook 'after-init-hook 'sml/setup))
    #+END_SRC
 
 ** Which Key
@@ -257,19 +255,23 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
        :after evil
        :config
        (setq evil-collection-mode-list nil)
-       (evil-collection-init 'xref)
-       (evil-collection-init 'info)
-       (evil-collection-init 'helpful)
-       (evil-collection-init 'dired)
-       (evil-collection-init 'ediff)
        (evil-collection-init 'calc)
-       (evil-collection-init 'flymake)
        (evil-collection-init 'cider)
        (evil-collection-init 'compile)
        (evil-collection-init 'custom)
-       (evil-collection-init 'sly)
-       (evil-collection-init 'geiser)
+       (evil-collection-init 'dired)
+       (evil-collection-init 'ediff)
        (evil-collection-init 'elfeed))
+       (evil-collection-init 'flycheck)
+       (evil-collection-init 'flymake)
+       (evil-collection-init 'geiser)
+       (evil-collection-init 'helpful)
+       (evil-collection-init 'info)
+       (evil-collection-init 'profiler)
+       (evil-collection-init 'sly)
+       (evil-collection-init 'tablist)
+       (evil-collection-init 'vterm)
+       (evil-collection-init 'xref)
    #+END_SRC
 
 *** Keybinding
@@ -288,9 +290,16 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
     Because we have mapped =C-u= to scrolling (as in vim), we can't do
     ~universal-argument~. To fix this, let's bind a key to that.
     #+BEGIN_SRC emacs-lisp
+      (defun better-universal-argument ()
+        (interactive)
+        (if current-prefix-arg
+            (universal-argument-more current-prefix-arg)
+          (universal-argument)))
+
       (global-definer
-        "u" '(universal-argument :wk "universal"))
+        "u" '(better-universal-argument :wk "universal"))
     #+END_SRC
+
 
 
     Next, let's create a macro that makes definers for each nested prefix maps.
@@ -324,14 +333,10 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
 
     Now, let's also make a quick helper for adding mode-specific motions.
     #+BEGIN_SRC emacs-lisp
-      (defmacro general-local-motion-definer (mode &rest body)
-        `(general-add-hook ,mode
-                           (lambda ()
-                             (general-define-key
-                              :states 'normal
-                              :keymaps 'local
-                              :prefix "g"
-                              ,@body))))
+      (general-create-definer general-local-motion-definer
+        :states 'normal
+        :keymaps 'override
+        :prefix "g")
     #+END_SRC
 
     We also need a mode-specific local leader.
@@ -442,9 +447,10 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
        (display-buffer (get-buffer-create "*scratch*")))
 
      (general-global-menu-definer "buffer" "b"
-                                  "b" '(counsel-switch-buffer :wk "switch buffer")
-                                  "d" '(kill-current-buffer   :wk "kill buffer")
-                                  "r" '(rename-buffer         :wk "rename buffer")
+                                  "b" '(counsel-switch-buffer    :wk "switch buffer")
+                                  "d" '(kill-current-buffer      :wk "kill buffer")
+                                  "r" '(rename-buffer            :wk "rename buffer")
+                                  "c" '(compile                  :wk "compile") ;; TODO: Is this the right place for this
                                   "F" '(font-lock-fontify-buffer :wk "fontify buffer"))
 
      (global-definer
@@ -492,14 +498,17 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
 
    Let's bind window management to some nicer keys
    #+BEGIN_SRC emacs-lisp
-     (general-global-menu-definer "window" "w"
-                                  "h" '(evil-window-left   :wk "left")
-                                  "j" '(evil-window-down   :wk "down")
-                                  "k" '(evil-window-up     :wk "up")
-                                  "l" '(evil-window-right  :wk "right")
-                                  "v" '(evil-window-vsplit :wk "vertical split")
-                                  "s" '(evil-window-split  :wk "horizontal split")
-                                  "d" '(evil-window-delete :wk "close"))
+     (general-global-menu-definer
+      "window" "w"
+      "c" '(whitespace-cleanup :wk "whitespace cleanup") ;; :(
+      "h" '(evil-window-left     :wk "left")
+      "j" '(evil-window-down     :wk "down")
+      "k" '(evil-window-up       :wk "up")
+      "l" '(evil-window-right    :wk "right")
+      "v" '(evil-window-vsplit   :wk "vertical split")
+      "s" '(evil-window-split    :wk "horizontal split")
+      "d" '(evil-window-delete   :wk "close")
+      "o" '(delete-other-windows :wk "close other"))
    #+END_SRC
 ** Tabs
    Let's use emacs 27 recently added tab support to emulate workspaces.
@@ -621,9 +630,22 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
 
    #+BEGIN_SRC emacs-lisp
      (general-mode-leader-definer 'org-mode-map
+       ;; General
+       "c" '(org-ctrl-c-ctrl-c     :wk "update")
+       ;; Editing
        "'" '(org-edit-special     :wk "edit")
+       "l" '(org-insert-link      :wk "insert link")
+       ;; Navigation
+       "o" '(org-open-at-point    :wk "open")
+       ;; Search
        "." '(counsel-org-goto     :wk "goto")
-       "/" '(counsel-org-goto-all :wk "goto all"))
+       "/" '(counsel-org-goto-all :wk "goto all")
+       ;; Deadlines
+       "s" '(org-schedule         :wk "schedule")
+       "d" '(org-deadline         :wk "deadline")
+       ;; Tasks
+       "t" '(org-todo             :wk "todo")
+       "w" '(org-refile           :wk "refile"))
    #+END_SRC
 
    Let's also define a global org menu for common tasks.
@@ -634,7 +656,26 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
 
      (general-global-menu-definer
       "notes" "n"
-      "n" '(browse-org-dir :wk "browse"))
+      "n" '(browse-org-dir :wk "browse")
+      "p" '(org-pomodoro :wk "pomodoro")
+      "o" '(org-clock-goto :wk "open current task")
+      "l" '(org-store-link :wk "store link"))
+   #+END_SRC
+
+
+   Note that =yasnippet= conflicts with the =<s= style shortcuts, so
+   let's fix that real quick.
+   #+BEGIN_SRC emacs-lisp
+     (defun org-yas-expand-maybe ()
+       (cond ((and (evil-insert-state-p) (yas--templates-for-key-at-point))
+              (call-interactively #'yas-expand)
+              t)
+             ((use-region-p)
+              (let ((yas-indent-line 'fixed))
+                (call-interactively #'yas-insert-snippet)
+                t))))
+
+     (add-hook 'org-tab-first-hook 'org-yas-expand-maybe)
    #+END_SRC
 
 ** Agenda
@@ -644,6 +685,69 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
       "open" "o"
       "a" '(org-agenda :wk "agenda"))
    #+END_SRC
+** Todos
+   Let's add some more keywords for our org todos.
+
+
+   The meanings of the keywords are as follows:
+   - TODO: A task that needs doing and is ready to do
+   - PROJ: A large project, cannot be completed in one single step
+   - STRT: A task that is in progress
+   - WAIT: A task that is blocked or on hold
+   - REVW: A task that is currently under review
+   - QUAL: A task that is undergoing QA
+   - BLCK: A task that blocked
+   - DONE: A task that is completed successfully
+   - KILL: A task that was cancelled, or is no longer applicable
+   #+BEGIN_SRC emacs-lisp
+     (setq org-todo-keywords
+           '((sequence
+              "TODO(t)"
+              "PROJ(p)"
+              "STRT(s)"
+              "WAIT(w)"
+              "REVW(r)"
+              "QUAL(q)"
+              "BLCK(b)"
+              "|"
+              "DONE(d)"
+              "KILL(k)")))
+   #+END_SRC
+
+   Now, let's define some faces for our todo keywords.
+   Note that we have to hack around the fact that
+   ~org-todo-keyword-faces~ doesn't respect underlying faces, so we
+   have to define our own that extend the ~org-todo~ face.
+   #+BEGIN_SRC emacs-lisp
+     (custom-declare-face 'org-todo-active '((t (:inherit (bold font-lock-constant-face org-todo)))) "")
+     (custom-declare-face 'org-todo-project '((t (:inherit (bold font-lock-doc-face org-todo)))) "")
+     (custom-declare-face 'org-todo-onhold '((t (:inherit (bold warning org-todo)))) "")
+     (custom-declare-face 'org-todo-blocked '((t (:inherit (bold error org-todo)))) "")
+
+     (setq org-todo-keyword-faces
+           '(("STRT" . org-todo-active)
+             ("WAIT" . org-todo-onhold)
+             ("REVW" . org-todo-onhold)
+             ("QUAL" . org-todo-onhold)
+             ("QUAL" . org-todo-onhold)
+             ("BLCK" . org-todo-blocked)
+             ("PROJ" . org-todo-project)))
+   #+END_SRC
+
+   I find it useful to highlight todos in any mode. =hl-todo=
+   provides this for us.
+   #+BEGIN_SRC emacs-lisp
+     (use-package hl-todo
+       :straight t
+       :hook (prog-mode . hl-todo-mode)
+       :config
+       (setq hl-todo-highlight-punctuation ":"
+             hl-todo-keyword-faces
+             `(("TODO"  . ,(face-foreground 'warning))
+               ("FIXME" . ,(face-foreground 'error))
+               ("HACK"  . ,(face-foreground 'font-lock-constant-face))
+               ("NOTE"  . ,(face-foreground 'success)))))
+    #+END_SRC
 ** Babel
    First, let's ensure that =org-babel= handles indentation nicely.
    #+BEGIN_SRC emacs-lisp
@@ -661,6 +765,12 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
    Let's also add a hook to prevent =org-babel= from adding tabs.
    #+BEGIN_SRC emacs-lisp
      (add-hook 'org-mode-hook (lambda () (setq indent-tabs-mode nil)))
+   #+END_SRC
+
+   I also find the default window splitting for editing src blocks
+   annoying, so let's change that.
+   #+BEGIN_SRC emacs-lisp
+     (setq org-src-window-setup 'other-window)
    #+END_SRC
 
    #+BEGIN_SRC emacs-lisp
@@ -738,8 +848,12 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
       '((latex . t)
         (gnuplot . t)
         (shell . t)
-        (haskell . t)))
+        (sql . t)
+        (haskell . t)
+        (C       . t)))
    #+END_SRC
+
+   Let's also bind
 ** Capture
    [[https://orgmode.org/manual/Capture.html#Capture][org-capture]] gives us a really handy way of creating different types
    of entries.
@@ -749,13 +863,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
      (setq org-capture-templates
            '(("t" "Personal Todo" entry
               (file+headline "todo.org" "Inbox")
-              "* TODO %?\n%i\n%a")
-             ("a" "Advent of Code" entry
-              (file+olp+datetree "aoc.org")
-              "* Problem %(number-to-string (decoded-time-day (decode-time (current-time))))\n
-                :PROPERTIES:\n
-                :END:")
-             ))
+              "* TODO %^{Description}\n%?")))
    #+END_SRC
 
    finally, let's bind ~org-capture~ to something easy to reach.
@@ -793,22 +901,6 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
        :after org-plus-contrib)
    #+END_SRC
 
-** Highlight Todos
-   I find it useful to highlight todos in any mode. =hl-todo=
-   provides this for us.
-   #+BEGIN_SRC emacs-lisp
-     (use-package hl-todo
-       :straight t
-       :hook (prog-mode . hl-todo-mode)
-       :config
-       (setq hl-todo-highlight-punctuation ":"
-             hl-todo-keyword-faces
-             `(("TODO"  . ,(face-foreground 'warning))
-               ("FIXME" . ,(face-foreground 'error))
-               ("HACK"  . ,(face-foreground 'font-lock-constant-face))
-               ("NOTE"  . ,(face-foreground 'success)))))
-    #+END_SRC
-
 * LaTeX
   Let's use =auctex= for our LaTeX editing environment.
   #+BEGIN_SRC emacs-lisp
@@ -830,6 +922,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
       :config
       (company-auctex-init))
   #+END_SRC
+
 * Auth Source
   =auth-source= lets us store and read GPG encrypted credentials.
 
@@ -850,7 +943,15 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
                 secret))
           (error "Password not found for %S" params))))
   #+END_SRC
+
 * Editor
+** Alignment
+   I often use ~align-regexp~, so let's bind that to something useful!
+   #+BEGIN_SRC emacs-lisp
+     (general-global-motion-definer
+       "A" '(align-regexp :wk "align"))
+   #+END_SRC
+
 ** Projectile
    [[https://github.com/bbatsov/projectile][projectile]] is a project system for emacs, which lets find navigate
    our projects much faster.
@@ -884,6 +985,22 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
       "p" '(projectile-ripgrep :wk "rg"))
    #+END_SRC
 
+   #+BEGIN_SRC emacs-lisp
+     (defun counsel-projectile-switch-project-action-open-tab (project)
+       "Open a new tab for PROJECT."
+       (let ((projectile-switch-project-action
+              (lambda ()
+                (tab-new)
+                (tab-rename project)
+                (counsel-projectile-find-file))))
+         (counsel-projectile-switch-project-by-name project)))
+
+
+     (ivy-set-actions 'counsel-projectile-switch-project
+                      '(("t" counsel-projectile-switch-project-action-open-tab "open in new tab")))
+
+   #+END_SRC
+
 ** Autocompletion
    For autocompletion, we are going to use [[https://github.com/company-mode/company-mode][company-mode]].
    #+BEGIN_SRC emacs-lisp
@@ -893,7 +1010,8 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
        :config
        (setq company-tooltip-align-annotations t
              company-idle-delay 0.3
-             company-echo-delay 0))
+             company-echo-delay 0
+             company-dabbrev-downcase nil))
    #+END_SRC
 
    For now, let's enable it globally.
@@ -913,6 +1031,15 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
        :config
        (add-to-list 'company-backends 'company-math-symbols-unicode))
    #+END_SRC
+** Dumb Jump
+  [[https://github.com/jacktasia/dumb-jump][dumb-jump]] lets us jump to definitions using a slightly less
+  complicated method than a language server or TAGS.
+
+  #+BEGIN_SRC emacs-lisp
+    (use-package dumb-jump
+      :straight t)
+  #+END_SRC
+
 ** Snippets
    We use [[https://github.com/joaotavora/yasnippet][yasnippet]] for all of our snippeting needs.
    #+BEGIN_SRC emacs-lisp
@@ -958,7 +1085,8 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
        (global-auto-revert-mode))
    #+END_SRC
 
-** Flymake
+** Errors
+*** Flymake
    We use =flymake= to handle displaying errors inside of buffers.
    However, there a few tweaks required to get things working nicely OOTB.
 
@@ -992,7 +1120,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
                     (window-height . 15)))
    #+END_SRC
 
-** Flycheck
+*** Flycheck
    Sometimes, =flymake= just won't cut it, so we have to fall back on =flycheck=.
    #+BEGIN_SRC emacs-lisp
      (use-package flycheck
@@ -1004,6 +1132,16 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
       (use-package flycheck-posframe
         :straight t
         :hook (flycheck-mode . flycheck-posframe-mode))
+    #+END_SRC
+
+    Let's also ensure that the =flycheck= error list buffer pops up at
+    the bottom.
+    #+BEGIN_SRC emacs-lisp
+     (add-to-list 'display-buffer-alist
+                  '("\\*Flycheck errors.*"
+                    (display-buffer-below-selected display-buffer-at-bottom)
+                    (inhibit-same-window . t)
+                    (window-height . 15)))
     #+END_SRC
 
 ** SmartParens
@@ -1074,8 +1212,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
 
    Next, let's add some nifty keybindings!
    #+BEGIN_SRC emacs-lisp
-     (general-local-motion-definer
-      'xref--xref-buffer-mode-hook
+     (general-local-motion-definer 'xref--xref-buffer-mode-map
       "k" 'xref-prev-line
       "j" 'xref-next-line)
    #+END_SRC
@@ -1139,6 +1276,17 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
             (general-global-git
               "t" '(git-timemachine :wk "timemachine")))
    #+END_SRC
+
+   =magit-todos= lets us see all of the TODOS we have listed in our repositories.
+   #+BEGIN_SRC emacs-lisp
+     (use-package magit-todos
+       :straight t
+       :after magit
+       :init
+       (magit-todos-mode))
+   #+END_SRC
+
+
 *** Ediff
     By default, =ediff= has some odd defaults. Let's change that
     #+BEGIN_SRC emacs-lisp
@@ -1149,6 +1297,14 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
         (setq ediff-diff-options "w")
         (setq ediff-split-window-function #'split-window-vertically
               ediff-window-setup-function #'ediff-setup-windows-plain))
+    #+END_SRC
+
+*** Forge
+    [[https://github.com/magit/forge][magit-forge]] allows us to interact with git hosts via magit.
+    #+BEGIN_SRC emacs-lisp
+      (use-package forge
+        :straight t
+        :after magit)
     #+END_SRC
 
 ** Brew
@@ -1171,7 +1327,9 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
    #+BEGIN_SRC emacs-lisp
      (general-global-menu-definer
       "docker" "d"
-      "c" '(docker-compose :wk "compose"))
+      "C" '(docker-compose    :wk "compose")
+      "i" '(docker-images     :wk "images")
+      "c" '(docker-containers :wk "containers"))
    #+END_SRC
 
 
@@ -1195,12 +1353,17 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
        (add-hook 'graphiql-mode-hook 'lsp)
        :config
        (setq graphiql-use-lsp t)
-       (general-local-motion-definer
-        'graphiql-mode-hook
+       (general-local-motion-definer 'graphiql-mode-map
         "j" '(graphiql-next-query     :wk "next query")
         "k" '(graphiql-previous-query :wk "previous query")))
    #+END_SRC
 
+** RestClient
+   I like to use =restclient= to test REST APIs.
+   #+BEGIN_SRC emacs-lisp
+     (use-package restclient
+       :straight t)
+   #+END_SRC
 ** GPG
    Enable prompting for GPG pins.
    #+BEGIN_SRC emacs-lisp
@@ -1211,7 +1374,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
    When we are in comint mode, let's bind some quick movement helpers
    #+BEGIN_SRC emacs-lisp
      (general-local-motion-definer
-      'comint-mode-hook
+      'comint-mode-map
       "j" 'comint-next-input
       "k" 'comint-previous-input)
    #+END_SRC
@@ -1243,10 +1406,27 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
    Now, let's add some helpful motion keys.
    #+BEGIN_SRC emacs-lisp
      (general-local-motion-definer
-      'eshell-mode-hook
+      'eshell-mode-map
       "j" 'eshell-next-input
       "k" 'eshell-previous-input)
    #+END_SRC
+** Complilation
+   Ensure that ANSI escape characters are properly handled.
+   #+BEGIN_SRC emacs-lisp
+     (add-hook 'compilation-filter-hook
+               (lambda () (ansi-color-filter-region (point-min) (point-max))))
+   #+END_SRC
+** VTerm
+   #+BEGIN_SRC emacs-lisp
+     (use-package vterm
+       :straight t)
+   #+END_SRC
+
+   #+BEGIN_SRC emacs-lisp
+     (general-global-menu-definer "open" "o"
+                                  "t" '(vterm :wk "vterm"))
+   #+END_SRC
+
 ** Prodigy
    Let's install [[https://github.com/rejeep/prodigy.el][prodigy]] to help us manage long running background processes.
 
@@ -1357,6 +1537,44 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
        (setq rmh-elfeed-org-files '("~/org/elfeed.org")))
    #+END_SRC
 
+** JQ
+   #+BEGIN_SRC emacs-lisp
+     (use-package jq-mode
+       :straight t)
+       #+END_SRC
+
+   #+BEGIN_SRC emacs-lisp
+     (defvar jq-working-buffer nil)
+
+     (defun jq-change-working-buffer (buf)
+       (interactive "bSet working buffer to: ")
+       (let ((buffer (get-buffer buf)))
+         (if (and buffer (buffer-live-p buffer))
+             (setq jq-working-buffer buffer)
+           (error "No such buffer: %S" buf))))
+
+     (defun jq-execute-query ()
+       (interactive)
+       (let ((query (thing-at-point 'line t)))
+         (with-current-buffer jq-working-buffer
+           (call-process-region
+            (point-min)
+            (point-max)
+            shell-file-name
+            t
+            jq-working-buffer
+            nil
+            shell-command-switch
+            (format "jq %s" (shell-quote-argument query)))
+           (ignore-errors
+             (json-mode)
+             (font-lock-fontify-region (point-min) (point-max))))))
+
+       (general-mode-leader-definer 'jq-mode-map
+         "c" '(jq-execute-query :wk "execute")
+         "b" '(jq-change-working-buffer))
+   #+END_SRC
+
 * LSP
   [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]] provides language services for quite a few languages.
   #+BEGIN_SRC emacs-lisp
@@ -1365,8 +1583,10 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
       :commands lsp
       :init
       (general-local-motion-definer
-       'lsp-mode-hook
+       'lsp-mode-map
        "d" 'lsp-find-definition
+       "I" 'lsp-find-implementation
+       "R" 'lsp-find-references
        "D" 'xref-pop-marker-stack)
       (general-define-key
        :states 'normal
@@ -1391,8 +1611,6 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
       :commands company-lsp)
   #+END_SRC
 
-
-
   Once that's installed, we have to register it as a company backend.
   #+BEGIN_SRC emacs-lisp
     (require 'company-lsp)
@@ -1412,6 +1630,29 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
           (setq lsp-print-performance t)
         (setq lsp-print-performance nil)))
   #+END_SRC
+
+  Let's also setup =dap-mode=.
+  #+BEGIN_SRC emacs-lisp
+    (use-package dap-mode;
+      :straight t)
+   #+END_SRC
+
+
+** Treemacs
+   I use treemacs to view the structure of very large projects.
+   #+BEGIN_SRC emacs-lisp
+     (use-package treemacs
+       :straight t
+       :init
+       (treemacs-resize-icons 14))
+   #+END_SRC
+
+   Let's also add =lsp-treemacs=
+   #+BEGIN_SRC emacs-lisp
+     (use-package lsp-treemacs
+       :straight t)
+   #+END_SRC
+
 * Languages
 ** Agda
    First, we need to load the =agda-input= package.
@@ -1424,13 +1665,11 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
 
    Now, let's load up =agda2-mode= itself.
    #+BEGIN_SRC emacs-lisp
-     (use-package agda2-mode
-       :straight (agda2-mode :type git :host github
-                             :repo "agda/agda"
-                             :files ("src/data/emacs-mode/*.el"
-                                     (:exclude "agda-input.el")))
-       :config
-       (add-to-path "~/.local/bin/"))
+          (use-package agda2-mode
+            :straight (agda2-mode :type git :host github
+                                  :repo "agda/agda"
+                                  :files ("src/data/emacs-mode/*.el"
+                                          (:exclude "agda-input.el"))))
    #+END_SRC
 
    Next, lets add a file template for agda files.
@@ -1448,7 +1687,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
     Next, let's set up the jump handler.
     #+BEGIN_SRC emacs-lisp
       (general-local-motion-definer
-       'agda2-mode-hook
+       'agda2-mode-map
        "j" 'agda2-next-goal
        "k" 'agda2-previous-goal
        "d" 'agda2-goto-definition-keyboard)
@@ -1468,17 +1707,19 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
 ** C
    For C, we shall be using [[https://github.com/MaskRay/emacs-ccls][ccls]] alongside =lsp-mode=.
    #+BEGIN_SRC emacs-lisp
-     (use-package ccls
-       :straight t
-       :hook ((c-mode c++-mode objc-mode) . 'lsp)
-       :config
-       (when (string= system-type "darwin")
-         (setq ccls-initialization-options
-               `(:clang (:resourceDir "/Library/Developer/CommandLineTools/usr/lib/clang/10.0.1"
-                         :extra-args ["-isystem" "/Library/Developer/CommandLineTools/usr/include/c++/v1"
-                                      "-isystem" "/Library/Developer/CommandLineTools/usr/lib/clang/10.0.1/include"
-                                      "-isystem" "/Library/Developer/CommandLineTools/usr/include"
-                                      "-isystem" "/Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk/usr/include"])))))
+          (use-package ccls
+            :straight t
+            :hook ((c-mode c++-mode objc-mode) . 'lsp)
+            :init
+            (require 'dap-lldb)
+            :config
+            (when (string= system-type "darwin")
+              (setq ccls-initialization-options
+                    `(:clang (:resourceDir "/Library/Developer/CommandLineTools/usr/lib/clang/10.0.1"
+                              :extra-args ["-isystem" "/Library/Developer/CommandLineTools/usr/include/c++/v1"
+                                           "-isystem" "/Library/Developer/CommandLineTools/usr/lib/clang/10.0.1/include"
+                                           "-isystem" "/Library/Developer/CommandLineTools/usr/include"
+                                           "-isystem" "/Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk/usr/include"])))))
    #+END_SRC
 
    Let's make sure to not look inside the =ccls= cache when doing
@@ -1493,6 +1734,12 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
                                      (setq indent-tabs-mode t)))
    #+END_SRC
 
+** C++
+   Meson is a C++ build system that doesn't suck.
+   #+BEGIN_SRC emacs-lisp
+     (use-package meson-mode
+       :straight t)
+   #+END_SRC
 ** CSS
    #+BEGIN_SRC emacs-lisp
      (add-hook 'less-css-mode-hook #'lsp)
@@ -1502,21 +1749,17 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
 ** F#
    We use [[https://github.com/fsharp/emacs-fsharp-mode][fsharp-mode]] to provide font locking and indentation for F#.
    #+BEGIN_SRC emacs-lisp
-     (defun fsharp-type-at ()
-       (interactive)
-       (lsp-request-async "fsharp/signature"
-                          (lsp--text-document-position-params)
-                          (lambda (response)
-                            (eldoc-message
-                             (fsharp-fontify-string (cdr (assq 'Data (json-read-from-string (ht-get response "content")))))))))
-
      (use-package fsharp-mode
        :straight t
+       :init
+       (general-define-key
+        :states 'visual
+        :keymaps 'fsharp-mode-map
+        "e" 'inferior-fsharp-eval-region)
        :config
        (add-hook 'fsharp-mode-hook 'lsp)
-       (add-hook 'fsharp-mode-hook
-                 (lambda ()
-                   (setq-local lsp-eldoc-hook '(fsharp-type-at))))
+       ;; Set the default repl select prompt
+       (setq inferior-fsharp-program "./sh/repl")
        :custom
        (fsharp-ac-intellisense-enabled nil))
    #+END_SRC
@@ -1530,6 +1773,13 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
    #+BEGIN_SRC emacs-lisp
      (add-to-path "/usr/local/share/dotnet/")
    #+END_SRC
+
+   Add Packet integration.
+   #+BEGIN_SRC emacs-lisp
+     (use-package paket
+       :straight (paket :type git :host github
+                        :repo "TOTBWF/paket.el"))
+   #+END_SRC
 ** Haskell
    First, let's install =haskell-mode=. This provides syntax
    highlighting and repl interaction.
@@ -1540,65 +1790,200 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
        :straight t
        :init
        (add-hook 'haskell-mode-hook 'interactive-haskell-mode)
+       (add-hook 'haskell-mode-hook 'haskell-decl-scan-mode)
        :config
        (setq haskell-font-lock-symbols t)
+       (setq haskell-process-use-presentation-mode t)
+       (setq haskell-ghci-options
+             '("-ferror-spans"
+               "-fdefer-typed-holes"
+               "-fno-max-relevant-binds"
+               "-fno-diagnostics-show-caret"
+               "-fno-show-valid-hole-fits"
+               "-fbyte-code"))
+       (setq haskell-process-args-cabal-new-repl
+             (mapcar (lambda (opt) (concat "--repl-options=" opt)) haskell-ghci-options))
+       (setq haskell-process-args-stack-ghci
+             (list (concat "--ghci-options=" (string-join haskell-ghci-options " "))
+                   "--no-build"
+                   "--no-load"))
+       (setq haskell-process-args-ghci haskell-ghci-options)
+       (setq haskell-process-auto-import-loaded-modules t)
        (setq haskell-font-lock-symbols-alist
              '(("\\" . "λ")
                ("." "∘" haskell-font-lock-dot-is-not-composition)
                ("forall" . "∀")))
-       (setq haskell-interactive-popup-errors nil))
+       (setq haskell-interactive-popup-errors nil)
+
+       (setq haskell-indentation-left-offset 4)
+       (setq haskell-indentation-layout-offset 4))
    #+END_SRC
 
+
+   Next, let's add agda-like refinement for holes.
    #+BEGIN_SRC emacs-lisp
-     (use-package dante
+     (defun haskell-refine-hole ()
+       (interactive)
+       (overlay-get (car (overlays-at (point))) 'haskell-hole))
+   #+END_SRC
+
+   Send the currently selected region to the interactive buffer.
+   #+BEGIN_SRC emacs-lisp
+     (defun haskell-interactive-send-command (cmd)
+       (haskell-interactive-mode-set-prompt cmd)
+       (with-current-buffer (haskell-session-interactive-buffer (haskell-interactive-session))
+         (haskell-interactive-handle-expr)))
+
+     (defun haskell-interactive-send-region ()
+       "Copy the current line to the prompt, overwriting the current prompt."
+       (interactive)
+       (let ((l (buffer-substring-no-properties (region-beginning)
+                                                (region-end))))
+         ;; If it looks like the prompt is at the start of the line, chop
+         ;; it off.
+         (when (and (>= (length l) (length haskell-interactive-prompt))
+                    (string= (substring l 0 (length haskell-interactive-prompt))
+                             haskell-interactive-prompt))
+           (setq l (substring l (length haskell-interactive-prompt))))
+
+         (haskell-interactive-send-command l)))
+   #+END_SRC
+
+   Let's ensure that binaries installed via cabal are on our path.
+   #+BEGIN_SRC emacs-lisp
+     (add-to-path (expand-file-name "~/.cabal/bin/"))
+     (add-to-path (expand-file-name "~/.local/bin/"))
+   #+END_SRC
+
+   Finally, let's bind some keys
+   #+BEGIN_SRC emacs-lisp
+     (general-mode-leader-definer 'haskell-mode-map
+       "?" '(haskell-hoogle                :wk "hoogle")
+       "s" '(haskell-interactive-switch    :wk "switch to interactive")
+       "i" '(haskell-process-do-info       :wk "info")
+       "t" '(haskell-mode-show-type-at     :wk "type")
+       "l" '(haskell-process-load-file     :wk "load")
+       "r" '(haskell-process-reload        :wk "reload")
+       "T" '(haskell-session-change-target :wk "change target")
+       "R" '(haskell-process-restart       :wk "restart process"))
+
+     (general-local-motion-definer 'haskell-mode-map
+       "k" '(beginning-of-defun :wk "top of definition")
+       "j" '(end-of-defun :wk "bottom of definition")
+       "d" '(haskell-mode-goto-loc :wk "goto definition"))
+
+     (general-define-key
+      :states 'visual
+      :keymaps 'haskell-mode-map
+      "e" 'haskell-interactive-send-region)
+
+     (general-mode-leader-definer 'haskell-interactive-mode-map
+       "s" '(haskell-interactive-switch-back :wk "switch to source"))
+
+     (general-local-motion-definer
+      'haskell-interactive-mode-map
+      "j" 'haskell-interactive-mode-prompt-next
+      "k" 'haskell-interactive-mode-prompt-previous)
+   #+END_SRC
+
+   Let's make it so that the haskell presentation buffer supports vim keybindings.
+   #+BEGIN_SRC emacs-lisp
+     (evil-collection-define-key 'normal 'haskell-presentation-mode-map
+       "q" 'quit-window
+       "c" 'haskell-presentation-clear)
+   #+END_SRC
+
+** Java
+   Let's use [[https://github.com/emacs-lsp/lsp-java][lsp-java]] to handle all of our lsp needs.
+   #+BEGIN_SRC emacs-lisp
+          (use-package lsp-java
+            :straight t
+            :after lsp
+            :hook (java-mode . lsp)
+            :config
+            (require 'dap-java))
+   #+END_SRC
+
+   Let's also fix some indentation issues with java.
+   #+BEGIN_SRC emacs-lisp
+     (defun java-indent-style ()
+       (c-set-offset 'arglist-intro '++)
+       (c-set-offset 'arglist-cont-nonempty '++))
+
+     (add-hook 'java-mode-hook 'java-indent-style)
+   #+END_SRC
+
+** Javascript
+   Let's make the node repl work.
+
+   #+BEGIN_SRC emacs-lisp
+     (use-package nodejs-repl
+       :straight t)
+     (general-define-key
+      :states 'visual
+      :keymaps 'web-mode-map
+      "e" 'nodejs-repl-send-region)
+     (general-define-key
+      :states 'normal
+      :keymaps 'web-mode-map
+      "e" 'nodejs-repl-send-last-expression)
+   #+END_SRC
+** Groovy
+   Let's just add [[https://github.com/Groovy-Emacs-Modes/groovy-emacs-modes][groovy-mode]].
+   #+BEGIN_SRC emacs-lisp
+     (use-package groovy-mode
+       :straight t)
+   #+END_SRC
+
+** Lean
+   First, let's install =lean-mode=.
+   #+BEGIN_SRC emacs-lisp
+     (use-package lean-mode
        :straight t
-       :after haskell-mode
-       :hook (haskell-mode . dante-mode)
-       :init
-       (add-hook 'haskell-mode-hook 'flycheck-mode)
-       (setq dante-load-flags '("+c"
-                                "-Wwarn=missing-home-modules"
-                                "-fno-diagnostics-show-caret"
-                                ;; neccessary to make attrap-attrap useful:
-                                "-Wall"
-                                ;; necessary to make company completion useful:
-                                "-fdefer-typed-holes"
-                                "-fdefer-type-errors"))
        :config
-       (setq dante-methods '(new-build stack bare-cabal bare-ghci))
-       ;; Dante only checks saved buffers, so let's disable on the fly checking
-       (setq-local flymake-no-changes-timeout nil)
-       (setq-local flymake-start-syntax-check-on-newline nil))
+       (add-hook 'lean-mode-hook 'flycheck-mode))
+   #+END_SRC
+
+   Let's also install =company-lean= for autocompletion.
+   #+BEGIN_SRC emacs-lisp
+     (use-package company-lean
+       :straight t)
+   #+END_SRC
+
+   Now, some helpful navigation.
+   #+BEGIN_SRC emacs-lisp
+     (general-local-motion-definer
+       'lean-mode-map
+       "d" 'lean-find-definition)
+   #+END_SRC
+
+   Now, lean loves to just gobble up your CPU while checking, so let's
+   tone that down a bit.
+   #+BEGIN_SRC emacs-lisp
+
    #+END_SRC
 
 ** Lisp
    Next, let's enable [[https://github.com/abo-abo/lispy][lispy]] for editing lisp code.
    #+BEGIN_SRC emacs-lisp
-          (use-package lispy
-            :straight t
-            :hook
-            (emacs-lisp-mode . lispy-mode)
-            (clojure-mode . lispy-mode)
-            (shen-mode . lispy-mode)
-            :config
-            (setq lispy-colon-p nil))
+     (use-package lispy
+       :straight t
+       :hook
+       (emacs-lisp-mode . lispy-mode)
+       (clojure-mode . lispy-mode)
+       (sly-mode . lispy-mode)
+       :config
+       (setq lispy-colon-p nil))
    #+END_SRC
 
-   Let's also add [[https://github.com/noctuid/lispyville][lispyville]] for better evil integration.
-   #+BEGIN_SRC emacs-lisp
-     (use-package lispyville
-       :straight t
-       :after lispy
-       :hook (lispy-mode . lispyville-mode)
-       :config
-       (lispyville-set-key-theme '(operators)))
-   #+END_SRC
 *** Clojure
     First, let's use [[https://github.com/clojure-emacs/cider][cider]].
     #+BEGIN_SRC emacs-lisp
       (use-package cider
         :straight t
-        :hook (clojure-mode . cider-mode))
+        :hook (clojure-mode . cider-mode)
+        :config
+        (define-clojure-indent (match 1)))
     #+END_SRC
 *** Common Lisp
     Let's try out =sly=.
@@ -1606,9 +1991,22 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
       (use-package sly
         :straight t
         :config
-        (setq inferior-lisp-program "/usr/bin/sbcl")
-        :gfhook 'lispy-mode)
+        (setq inferior-lisp-program "/usr/bin/sbcl"))
     #+END_SRC
+
+   Let's bind some keys!
+   #+BEGIN_SRC emacs-lisp
+     (general-define-key
+      :states 'visual
+      :keymaps 'sly-mode-map
+      "e" 'sly-eval-region
+      "E" 'sly-pprint-eval-last-expression)
+     (general-define-key
+      :states 'normal
+      :keymaps 'sly-mode-map
+      "e" 'sly-pprint-eval-last-expression
+      "E" 'sly-pprint-eval-last-expression)
+   #+END_SRC
 
 *** Emacs Lisp
     Let's enable =flymake-mode= when editing elisp code.
@@ -1634,21 +2032,147 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
         :config
         (setq geiser-chez-binary "chez"))
     #+END_SRC
-*** Shen
-    Let's use [[https://github.com/eschulte/shen-mode][shen-mode]] to edit shen code.
-    #+BEGIN_SRC emacs-lisp
-      (use-package shen-mode
-        :straight (shen-mode :type git :host github
-                             :repo "NHALX/shen-mode")
-        :config
-        (setq inferior-shen-program "shen-sbcl"))
+** Nix
+   First, let's install =nix-mode=.
+   #+BEGIN_SRC emacs-lisp
+     (use-package nix-mode
+       :straight t)
+   #+END_SRC
+
+   Next, we should make sure that all of our nix executables are on
+   our path.
+   #+BEGIN_SRC emacs-lisp
+     (add-to-path "~/.nix-profile/bin")
+   #+END_SRC
+
+** Protobuf
+   =protobuf-mode= just adds some simple syntax highlighting to
+   protobuf files.
+   #+BEGIN_SRC emacs-lisp
+     (use-package protobuf-mode
+       :straight t)
+   #+END_SRC
+
+   Let's also configure the indentation settings for protobuf files.
+   #+BEGIN_SRC emacs-lisp
+     (defconst protobuf-indent-style
+       '((c-basic-offset . 4)))
+
+     (add-hook 'protobuf-mode-hook
+               (lambda () (c-add-style "protobuf" protobuf-indent-style t)))
+   #+END_SRC
+
+   Let's also set our jump handlers.
+   #+BEGIN_SRC emacs-lisp
+     (general-local-motion-definer
+       'protobuf-mode-map
+       "d" 'dumb-jump-go)
+   #+END_SRC
+
+   #+BEGIN_SRC emacs-lisp
+     (general-mode-leader-definer 'java-mode-map
+       "i" '(lsp-java-add-import :wk "Add import"))
+   #+END_SRC
+
+** Purescript
+   First, let's use =purescript-mode= for syntax highlighting + indentation.
+   #+BEGIN_SRC emacs-lisp
+     (use-package purescript-mode
+       :straight t
+       :config
+       (add-hook 'purescript-mode-hook
+                 (lambda ()
+                   (psc-ide-mode)
+                   (flycheck-mode)
+                   (turn-on-purescript-indentation))))
     #+END_SRC
 
-    Let's add support for the lispy =e= shortcut.
+    We also use =psc-ide= to handle autocompletion + errors.
     #+BEGIN_SRC emacs-lisp
-
+      (use-package psc-ide
+        :straight t)
     #+END_SRC
 
+    Let's also set some jump handlers.
+    #+BEGIN_SRC emacs-lisp
+      (general-local-motion-definer
+       'purescript-mode-map
+       "d" 'psc-ide-goto-definition)
+    #+END_SRC
+
+    Lets add some prettier versions of some common keywords.
+    #+BEGIN_SRC emacs-lisp
+      (add-hook 'purescript-mode-hook
+                (lambda ()
+                  (setq-local prettify-symbols-alist
+                              '(("forall" . ?∀)
+                                ("\\" . ?λ)))
+                  (prettify-symbols-mode)))
+    #+END_SRC
+
+** RedTT
+   #+BEGIN_SRC emacs-lisp
+     (use-package redtt
+       :straight (redtt :type git :host github
+                        :repo "RedPRL/redtt"
+                        :files ("emacs/*.el"))
+       :init
+       (add-to-path (expand-file-name "~/.opam/4.09.0/bin/")))
+   #+END_SRC
+** Standard ML
+   First, let's install sml-mode.
+   #+BEGIN_SRC emacs-lisp
+     (use-package sml-mode
+       :straight t)
+   #+END_SRC
+
+   This might work, this might not.
+   Maybe, Maybe not????
+   #+BEGIN_SRC emacs-lisp
+     (use-package company-mlton
+       :straight (company-mlton :type git :host github :repo "MatthewFluet/company-mlton")
+       :config (add-hook 'sml-mode-hook #'company-mlton-init))
+   #+END_SRC
+
+** SuperCollider
+   Make music.
+   #+BEGIN_SRC emacs-lisp
+     (use-package sclang
+       :straight t
+       :init
+       (general-define-key
+        :states 'visual
+        :keymaps 'sclang-mode-map
+        "e" 'sclang-eval-region))
+   #+END_SRC
+** Twelf
+   #+BEGIN_SRC emacs-lisp
+     (use-package twelf
+       :straight (twelf :type git :host github
+                        :repo "standardml/twelf"
+                        :files ("emacs/*.el"))
+       :init
+       (add-hook 'twelf-mode-hook
+                 (lambda ()
+                   (twelf-font-fontify-buffer)
+                   (add-hook 'after-save-hook 'twelf-font-fontify-buffer)))
+       (add-to-list 'auto-mode-alist '("\\.elf$" . twelf-mode)))
+   #+END_SRC
+*** Theme
+    By default, ~twelf-mode~ has pretty ugly syntax highlighting, so
+    let's fix that.
+    # #+BEGIN_SRC emacs-lisp
+    #   (set-face-attribute 'twelf-font-decl-face nil
+    #                       :foreground "#51afef")
+    #   (set-face-attribute 'twelf-font-keyword-face nil
+    #                       :foreground "#ecbe7b")
+    #   (set-face-attribute 'twelf-font-evar-face nil
+    #                       :foreground "#c678dd")
+    #   (set-face-attribute 'twelf-font-fvar-face nil
+    #                       :foreground "#dcaeea")
+    #   (set-face-attribute 'twelf-font-parm-face nil
+    #                       :foreground "#98be65")
+    # #+END_SRC
 ** Typescript
    Typescript is a bit of a pain to get working, mostly due to
    the evils of JSX.
@@ -1680,6 +2204,7 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
 
    Next, let's load the typescript language server.
    #+BEGIN_SRC emacs-lisp
+     (add-to-list 'auto-mode-alist '("\\.js[x]?\\'" . web-mode))
      (add-to-list 'auto-mode-alist '("\\.ts[x]?\\'" . web-mode))
      (add-hook 'web-mode-hook
                (lambda ()
@@ -1707,37 +2232,17 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
        :straight t)
    #+END_SRC
 
-** Purescript
-   First, let's use =purescript-mode= for syntax highlighting + indentation.
+** YAML
    #+BEGIN_SRC emacs-lisp
-     (use-package purescript-mode
-       :straight t
-       :config
-       (add-hook 'purescript-mode-hook
-                 (lambda ()
-                   (psc-ide-mode)
-                   (flycheck-mode)
-                   (turn-on-purescript-indentation))))
-    #+END_SRC
-
-    We also use =psc-ide= to handle autocompletion + errors.
-    #+BEGIN_SRC emacs-lisp
-      (use-package psc-ide
-        :straight t)
-    #+END_SRC
-
-    Let's also set some jump handlers.
-    #+BEGIN_SRC emacs-lisp
-      (general-local-motion-definer
-       'purescript-mode-hook
-       "d" 'psc-ide-goto-definition)
-    #+END_SRC
+     (use-package yaml-mode
+       :straight t)
+   #+END_SRC
 
 * Private Configuration
   If you want to have personal configurations
   (irc servers, etc), you can create a file called
   =private.org= and place them there. Let's load
-  and tangle the file (if it exists).
+  the file (if it exists).
   #+BEGIN_SRC emacs-lisp
     (when (file-exists-p "~/.emacs.d/private.el")
       (load "~/.emacs.d/private.el"))
@@ -1748,4 +2253,3 @@ There is also some extra info at [[https://github.com/noctuid/evil-guide][evil-g
     (when (file-exists-p "~/.emacs.d/custom.el")
       (load "~/.emacs.d/custom.el"))
   #+END_SRC
-  
